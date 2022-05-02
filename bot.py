@@ -2,7 +2,7 @@ import telebot
 import cherrypy
 import config
 
-WEBHOOK_HOST = 'IP-адрес сервера, на котором запущен бот'
+WEBHOOK_HOST = '62.84.123.173'
 WEBHOOK_PORT = 443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
 WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
 
