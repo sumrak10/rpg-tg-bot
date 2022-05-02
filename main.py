@@ -182,13 +182,13 @@ def locationHandler(message):
     if message.text == 'Назад':
         mainMenu(message)
     elif message.text == 'Дом':
-        bot.send_message(message.from_user.id, "Локация: Дом №"+str(message.from_user.id)+"\n"+hellotext, reply_markup=chat_kb())
+        bot.send_message(message.from_user.id, "Локация: Дом №"+str(message.from_user.id)+"\n", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, message.from_user.id)
         personsId = get_persons_in_loc_bd(message.from_user.id)
         for i in range(len(personsId)):
             if personsId[i][0] == personId:
                 continue
-            bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Дом'</u>", parse_mode="HTML")
+            bot.send_message(personsId[i][0],'<u>'+personName+" находится у вас дома</u>", parse_mode="HTML")
     elif message.text == 'Пойти в гости':
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('Назад')
@@ -386,8 +386,8 @@ def messagesHandler(message):
                     personlist += personsId[i][1]+', '
                 personlist = personlist[0:-2]
                 bot.send_message(personId,'В локации находятся: \n'+personlist)
-            elif message.text.lower() == '!мойid':
-                bot.send_message(personId,'Твой ID: '+str(personId))
+            elif message.text.lower() == '!мойномер':
+                bot.send_message(personId, str(personId))
             elif message.text.lower() == '!время':
                 time_now = datetime.datetime.now().time()
                 bot.send_message(personId,'Время: '+time_now.strftime('%H:%M'))
@@ -412,13 +412,13 @@ def messagesHandler(message):
                     bot.send_message(personId,'В данной локации эта команда не доступна!')
             elif message.text.lower() == '!помощь':
                 bot.send_message(personId,"""
-!Меню - возвращает вас в главное меню\n
-!Передать - передает деньги другому персонажу. Формат ввода команды: !Передать (id адресата) (сумма перевода)\n
-!Баланс - показывает ваш баланс\n
-!Ктоздесь - показывает всех персонажей которые находятся в одной локации что и вы\n
-!Мойid - показывает ваш id\n
-!Время - показывает текущее время\n
-!Помощь - выводит данный текст""")
+!меню - возвращает вас в главное меню\n
+!передать - передает деньги другому персонажу. Формат ввода команды: !Передать (id адресата) (сумма перевода)\n
+!баланс - показывает ваш баланс\n
+!ктоздесь - показывает всех персонажей которые находятся в одной локации что и вы\n
+!мойномер - показывает ваш id\n
+!время - показывает текущее время\n
+!помощь - выводит данный текст""")
         else:
             if personLoc == 0:
                 bot.send_message(personId,'Введи /game чтобы оказаться в главном меню!')
