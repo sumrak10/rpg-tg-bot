@@ -119,7 +119,7 @@ def mainMenu_kb():
 	return markup
 def chat_kb():
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add('!Меню')
+    markup.add('!меню', '!помощь')
     return markup
 
 def timedelta(stop,time_now):
@@ -182,26 +182,17 @@ def locationHandler(message):
     if message.text == 'Назад':
         mainMenu(message)
     elif message.text == 'Дом':
-        propdata = get_prop_data_from_bd(message.from_user.id)
-        if propdata[3] > 0:
-            if propdata[3] == 50:
-                hellotext = 'Войдя в помещение которое трудно назвать домом вы почуствовали противный запах сырости. Хотелось побыстрей унести ноги из этого богом забытого места'
-            elif propdata[3] == 100:
-                hellotext = 'Войдя в помещение вы увидели большие панорамные окна с видом на город. Было заметно что человек проживающий тут любит себя.'
-            bot.send_message(message.from_user.id, "Локация: Дом №"+str(message.from_user.id)+"\n"+hellotext, reply_markup=chat_kb())
-            update_loc_bd(message.from_user.id, message.from_user.id)
-            personsId = get_persons_in_loc_bd(message.from_user.id)
-            for i in range(len(personsId)):
-                if personsId[i][0] == personId:
-                    continue
-                bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Дом'</u>", parse_mode="HTML")
-        else:
-            bot.send_message(message.from_user.id,"У вас нет дома! Приобретите его во вкладке 'Панель заработок'")
-            mainMenu(message)
+        bot.send_message(message.from_user.id, "Локация: Дом №"+str(message.from_user.id)+"\n"+hellotext, reply_markup=chat_kb())
+        update_loc_bd(message.from_user.id, message.from_user.id)
+        personsId = get_persons_in_loc_bd(message.from_user.id)
+        for i in range(len(personsId)):
+            if personsId[i][0] == personId:
+                continue
+            bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Дом'</u>", parse_mode="HTML")
     elif message.text == 'Пойти в гости':
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('Назад')
-        msg = bot.send_message(message.from_user.id, "Впишите id персонажа к кому вы хотите пойти в гости", reply_markup=markup)
+        msg = bot.send_message(message.from_user.id, "(нет функции обработчика) Впишите id персонажа к кому вы хотите пойти в гости", reply_markup=markup)
         bot.register_next_step_handler(msg, visitsHandler)
     elif message.text == 'Улица': 
         bot.send_message(message.from_user.id, "Локация: Улица\nБольшая широкая улица кишащая толпами людей которые вечно куда-то спешат", reply_markup=chat_kb())
@@ -248,35 +239,7 @@ def locationHandler(message):
     else:
         bot.send_message(message.from_user.id, "Нажми на пункт меню!")
         mainMenu(message)
-def visitsHandler(message):
-    if message.text == 'Назад':
-        mainMenu(message)
-    else:
-        isint = 0
-        try:
-            visidID = int(message.text)
-            isint = 1
-        except:
-            bot.send_message(message.from_user.id, "Мне нужен только ID цифрами и ничего лишнего")
-            mainMenu(message)
-        if isint:
-            visidID = int(message.text)
-            propdata = get_prop_data_from_bd(visidID)
-            if propdata[3] > 0:
-                if propdata[3] == 50:
-                    hellotext = 'Войдя в помещение которое трудно назвать домом вы почуствовали противный запах сырости. Хотелось побыстрей унести ноги из этого богом забытого места'
-                elif propdata[3] == 100:
-                    hellotext = 'Войдя в помещение вы увидели большие панорамные окна с видом на город. Было заметно что человек проживающий тут любит себя.'
-                bot.send_message(message.from_user.id, "Локация: Дом №"+str(message.from_user.id)+"\n"+hellotext, reply_markup=chat_kb())
-                update_loc_bd(message.from_user.id, visidID)
-                personsId = get_persons_in_loc_bd(visidID)
-                for i in range(len(personsId)):
-                    if personsId[i][0] == personId:
-                        continue
-                    bot.send_message(personsId[i][0],personName+" вошел в локацию 'Дом'")
-            else:
-                bot.send_message(message.from_user.id,"У персонажа нет дома!")
-                mainMenu(message)
+
 def profileHandler(message):
     if message.text == 'Назад':
         mainMenu(message)
@@ -362,6 +325,7 @@ def changeDes(message):
     except:
         bot.send_message(message.from_user.id, "Произошла ошибка! Попробуйте позже!")
     mainMenu(message)
+
 # /ИГРА
 def getProductsList(productsList):
     products = ''
@@ -391,15 +355,6 @@ def messagesHandler(message):
         personDes = data[3]
         personMon = data[4]
         personLoc = data[5]
-        prop_data = get_prop_data_from_bd(message.from_user.id)
-        if not(prop_data[5] == ''):
-            time_work = prop_data[5].split('-')
-            start_work = datetime.datetime.strptime(time_work[0], '%H:%M').time()
-            stop_work = datetime.datetime.strptime(time_work[1], '%H:%M').time()
-            time_now = datetime.datetime.now().time()
-            if (start_work<=time_now<stop_work):
-                bot.send_message(message.from_user.id,'Вы сейчас на работе и не можете находиться в локациях')
-                mainMenu(message)
         if message.text[0] == '!':
             slpitMessage = message.text.split()
             if message.text.lower() == '!меню':
