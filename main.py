@@ -176,7 +176,7 @@ def mainMenuHandler(message):
         bot.register_next_step_handler(msg, locationHandler)
     else:
         bot.send_message(message.from_user.id, "Нажми на пункт меню!")
-        mainMenu(message)]
+        mainMenu(message)
 
 def locationHandler(message):
     if message.text == 'Назад':
