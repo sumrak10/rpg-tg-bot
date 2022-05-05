@@ -29,10 +29,6 @@ class WebhookServer(object):
 
 from main import *
 
-
-
-
-
 # Снимаем вебхук перед повторной установкой (избавляет от некоторых проблем)
 bot.remove_webhook()
 
