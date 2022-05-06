@@ -101,11 +101,11 @@ def update_mon_bd_by_id(id, val):
 	conn.commit()
 	conn.close()
 
-def get_friends_and_enemies_list(uname):
+def get_friends_and_enemies_list(id):
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
-    sql = "SELECT * FROM relationship WHERE uname=?"
-    cursor.execute(sql, [(uname)])
+    sql = "SELECT * FROM relationship WHERE id=?"
+    cursor.execute(sql, [(id)])
     fetch_data = cursor.fetchall()
     try:
         fetch_data = fetch_data[0]
@@ -118,12 +118,12 @@ def get_friends_and_enemies_list(uname):
     conn.close()
     return friends, enemies
 # 200 - друг добавлен 300 - враг добавлен в чс 401 - друг уже есть 403 - друг в чс 501 - враг уже есть 503 - враг в друзьях
-def add_friend(uname,friend):
+def add_friend(id,friend):
     status = 0
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
-    sql = "SELECT * FROM relationship WHERE uname=?"
-    cursor.execute(sql, [(uname)])
+    sql = "SELECT * FROM relationship WHERE id=?"
+    cursor.execute(sql, [(id)])
     fetch_data = cursor.fetchall()
     fetch_data = fetch_data[0]
     friends = fetch_data[2]
@@ -137,22 +137,22 @@ def add_friend(uname,friend):
             status = 403
             break
     if status == 0:
-        data = [(friends+' '+friend, uname)]
+        data = [(friends+' '+friend, id)]
         sql = """UPDATE relationship
                 SET white = ?
-                WHERE uname = ?"""
+                WHERE id = ?"""
         cursor.executemany(sql, data)
         status = 200
     conn.commit()
     conn.close()
     return status
 # 201 - удален из друзей 601 - не было в друзьях
-def del_friend(uname, friend):
+def del_friend(id, friend):
     status = 0
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
-    sql = "SELECT * FROM relationship WHERE uname=?"
-    cursor.execute(sql, [(uname)])
+    sql = "SELECT * FROM relationship WHERE id=?"
+    cursor.execute(sql, [(id)])
     fetch_data = cursor.fetchall()
     fetch_data = fetch_data[0]
     friends = fetch_data[2]
@@ -168,22 +168,22 @@ def del_friend(uname, friend):
         status = 601
     friends = friends1
     if status == 0:
-        data = [(friends, uname)]
+        data = [(friends, id)]
         sql = """UPDATE relationship
                 SET white = ?
-                WHERE uname = ?"""
+                WHERE id = ?"""
         cursor.executemany(sql, data)
         status = 201
     conn.commit()
     conn.close()
     return status
 # 200 - друг добавлен 300 - враг добавлен в чс 401 - друг уже есть 403 - друг в чс 501 - враг уже есть 503 - враг в друзьях
-def add_enemy(uname,enemy):
+def add_enemy(id,enemy):
     status = 0
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
-    sql = "SELECT * FROM relationship WHERE uname=?"
-    cursor.execute(sql, [(uname)])
+    sql = "SELECT * FROM relationship WHERE id=?"
+    cursor.execute(sql, [(id)])
     fetch_data = cursor.fetchall()
     fetch_data = fetch_data[0]
     friends = fetch_data[2]
@@ -197,22 +197,22 @@ def add_enemy(uname,enemy):
             status = 501
             break
     if status == 0:
-        data = [(enemies+' '+enemy, uname)]
+        data = [(enemies+' '+enemy, id)]
         sql = """UPDATE relationship
                 SET black = ?
-                WHERE uname = ?"""
+                WHERE id = ?"""
         cursor.executemany(sql, data)
         status = 300
     conn.commit()
     conn.close()
     return status
 # 301 - враг удален 701 - не было во врагах
-def del_enemy(uname, enemy):
+def del_enemy(id, enemy):
     status = 0
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
-    sql = "SELECT * FROM relationship WHERE uname=?"
-    cursor.execute(sql, [(uname)])
+    sql = "SELECT * FROM relationship WHERE id=?"
+    cursor.execute(sql, [(id)])
     fetch_data = cursor.fetchall()
     fetch_data = fetch_data[0]
     friends = fetch_data[2]
@@ -228,10 +228,10 @@ def del_enemy(uname, enemy):
         status = 701
     enemies = enemies1
     if status == 0:
-        data = [(enemies, uname)]
+        data = [(enemies, id)]
         sql = """UPDATE relationship
                 SET black = ?
-                WHERE uname = ?"""
+                WHERE id = ?"""
         cursor.executemany(sql, data)
         status = 301
     conn.commit()

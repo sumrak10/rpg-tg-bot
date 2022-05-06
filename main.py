@@ -166,17 +166,17 @@ def chat_kb():
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add('!помощь', '!локации','!меню')
     return markup
-def relationShip_kb(uname,user):
-    friends, enemies = get_friends_and_enemies_list(uname)
+def relationShip_kb(id,uid):
+    friends, enemies = get_friends_and_enemies_list(id)
     markup = telebot.types.InlineKeyboardMarkup()
-    if user in friends:
-        markup.add(telebot.types.InlineKeyboardButton(text = 'Удалить из друзей', callback_data ='relationship delfriend '+user))
-    elif not(user in enemies):
-        markup.add(telebot.types.InlineKeyboardButton(text = 'Добавить в друзья', callback_data ='relationship addfriend '+user))
-    if (user in enemies):
-        markup.add(telebot.types.InlineKeyboardButton(text = 'Убрать из ЧС', callback_data ='relationship delenemy '+user))
-    elif not(user in friends):
-        markup.add(telebot.types.InlineKeyboardButton(text = 'Отправить в ЧС', callback_data ='relationship addenemy '+user))
+    if uid in friends:
+        markup.add(telebot.types.InlineKeyboardButton(text = 'Удалить из друзей', callback_data ='relationship delfriend '+uid))
+    elif not(uid in enemies):
+        markup.add(telebot.types.InlineKeyboardButton(text = 'Добавить в друзья', callback_data ='relationship addfriend '+uid))
+    if (uid in enemies):
+        markup.add(telebot.types.InlineKeyboardButton(text = 'Убрать из ЧС', callback_data ='relationship delenemy '+uid))
+    elif not(uid in friends):
+        markup.add(telebot.types.InlineKeyboardButton(text = 'Отправить в ЧС', callback_data ='relationship addenemy '+uid))
     return markup
 def casinoMonetkaBet_kb():
     markup = telebot.types.InlineKeyboardMarkup()
@@ -314,29 +314,28 @@ def callbackHandler(call):
 
     if call.data.split()[0] == 'relationship':
         func = call.data.split()[1]
-        user = call.data.split()[2]
-        me = get_data_from_bd_by_id(call.message.chat.id)
-        me = me[1]
+        uid = call.data.split()[2]
+        me = call.message.chat.id
         if func == 'addfriend':
-            status = add_friend(me,user)
+            status = add_friend(me,uid)
             if status == 200:
                 bot.answer_callback_query(callback_query_id=call.id, text="Друг добавлен", show_alert=False)
-            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,user))
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,uid))
         elif func == 'addenemy':
-            status = add_enemy(me,user)
+            status = add_enemy(me,uid)
             if status == 300:
                 bot.answer_callback_query(callback_query_id=call.id, text="Отправлен в ЧС", show_alert=False)
-            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,user))
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,uid))
         elif func == 'delfriend':
-            status = del_friend(me,user)
+            status = del_friend(me,uid)
             if status == 201:
                 bot.answer_callback_query(callback_query_id=call.id, text="Друг удален", show_alert=False)
-            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,user))
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,uid))
         elif func == 'delenemy':
-            status = del_enemy(me,user)
+            status = del_enemy(me,uid)
             if status == 301:
                 bot.answer_callback_query(callback_query_id=call.id, text="Убран из ЧС", show_alert=False)
-            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,user))
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,uid))
 
 
     if call.data.split()[0] == 'casino':
@@ -411,11 +410,11 @@ def callbackHandler(call):
                     if mdata[2] != '0':
                         update_mon_bd_by_id(call.message.chat.id,str(int(data[5])+income_money))
                         update_business_date(call.message.chat.id,date_to_string(date_now))
-                        if int(datedelta.days) == 1:
+                        if int(datedelta.days) == 0:
                             bot.answer_callback_query(callback_query_id=call.id, text="Вы уже собирали сегодня доход", show_alert=True)
                         else:
-                            bot.answer_callback_query(callback_query_id=call.id, text="Доход: "+str(income_money)+' за '+str(datedelta.days)+' дней', show_alert=True)
-                        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Баланс: '+str(data[5])+'\nДенег нокопилось: '+str(income_money)+'\nПассивный ежедневный доход: '+str(mdata[2]),reply_markup=management_kb())
+                            bot.answer_callback_query(callback_query_id=call.id, text="Доход: "+str(income_money)+' RPCoin за '+str(datedelta.days)+' дней', show_alert=True)
+                            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Баланс: '+str(int(data[5])+int(income_money))+' RPC\nДенег нокопилось: '+str('0')+' RPC\nПассивный ежедневный доход: '+str(mdata[2])+' RPC',reply_markup=management_kb())
                     else: 
                         bot.answer_callback_query(callback_query_id=call.id, text="Нет пассивного дохода", show_alert=True)
                 elif func2 == 'business':
@@ -465,102 +464,22 @@ def mainMenu(message):
                 if int(personsId[i][0]) == int(personId):
                     continue
                 try:
-                    bot.send_message(personsId[i][0],'<u>'+personName+" покинул локацию</u>", parse_mode="HTML")
+                    bot.send_message(personsId[i][0],'<i>'+personName+" покинул локацию</i>", parse_mode="HTML")
                 except:
                     print(str(personsId[i][0])+"bot was blocked by that user 182")
             update_loc_bd(message.from_user.id, "0")
             personLoc = 0
+        bot.send_message(message.from_user.id, "Главное меню:", reply_markup=mainMenu_kb())
 
-        msg = bot.send_message(message.from_user.id, "Главное меню:", reply_markup=mainMenu_kb())
-        bot.register_next_step_handler(msg, mainMenuHandler)
-def mainMenuHandler(message):
-    global personId,personUname,personName,personAge,personDes,personMon,personLoc, locationlist
-    updateGlobalVars(message.from_user.id)
-    if message.text == 'Профиль👤':
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add('Друзья и ЧС👥', 'Назад↩️')
-        markup.add('Редактировать профиль⚙️')
-        msg = bot.send_message(message.from_user.id, "\nUsername: <code>"+personUname+"</code>\nИмя: "+personName+"\nВозраст: "+str(personAge)+"\nБаланс: "+str(personMon)+"\nОписание: "+personDes, parse_mode="HTML",reply_markup=markup)
-        bot.register_next_step_handler(msg, profileHandler)
-    elif message.text == 'Локации📍' or message.text.lower() == '!локации':
-        if personLoc != 0:
-            personsId = get_persons_in_loc_bd(personLoc)
-            for i in range(len(personsId)):
-                if int(personsId[i][0]) == int(personId):
-                    continue
-                try:
-                    bot.send_message(personsId[i][0],'<u>'+personName+" покинул локацию</u>", parse_mode="HTML")
-                except:
-                    print(str(personsId[i][0])+"bot was blocked by that user 313")
-            update_loc_bd(message.from_user.id, "0")
-            personLoc = 0
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        time_now = datetime.datetime.now().time()
-        locationlist = [['Дом🏠', 'В гости🏘','Назад↩️'],['Улица🚙', 'Парк🏞', 'Кафе☕️'],['Школа✍️','Клуб🌃','Казино💸']]
-        if not((6 < int(personAge) <= 18) and ((schoolopen<=time_now) and (schoolclose>time_now))):
-            locationlist[2][0] = locationlist[2][0][0:len(locationlist[2][0])-2] + not_available_emoji
-        if not((18 <= int(personAge)) and ((clubopen<=time_now) and (clubclose>time_now))):
-            locationlist[2][1] = locationlist[2][1][0:len(locationlist[2][1])-1] + not_available_emoji
-        if not(18 <= int(personAge)):
-            locationlist[2][2] = locationlist[2][2][0:len(locationlist[2][2])-1] + not_available_emoji
-        for i in range(len(locationlist)):
-            if len(locationlist[i]) == 3:
-                markup.add(locationlist[i][0],locationlist[i][1],locationlist[i][2])
-            if len(locationlist[i]) == 2:
-                markup.add(locationlist[i][0],locationlist[i][1])
-            if len(locationlist[i]) == 1:
-                markup.add(locationlist[i][0])
-        msg = bot.send_message(message.from_user.id, "Выберите локацию", reply_markup=markup)
-        bot.register_next_step_handler(msg, locationHandler)
-    elif message.text == 'Панель заработка🧮':
-        date_now = datetime.datetime.now().date()
-        date = date_now - datetime.timedelta(1)
-        try:
-            mdata = get_data_from_management(personId)
-        except:
-            businessStr = ''
-            for i in businessList:
-                businessStr += str(i[1])+'-0 '
-            insert_new_person_in_management(personId,date_to_string(date), businessStr)
-        mdata = get_data_from_management(personId)
-        data = get_data_from_bd_by_id(personId)
-        datedelta = date_now - string_to_date(mdata[1])
-        datedeltafinc = date_now - string_to_date(mdata[3])
-        income_money = int(datedeltafinc.days) * int(mdata[2])
-        if datedelta.days >= 1:
-            bot.send_message(personId,'Вам доступен ежедневный приз размером в 25 RPCoin!', reply_markup=everydayPrize_kb())
-        bot.send_message(personId,'Баланс: '+str(data[5])+'\nДенег нокопилось: '+str(income_money)+'\nПассивный ежедневный доход: '+str(mdata[2]),reply_markup=management_kb())
-        mainMenu(message)
-    else:
-        bot.send_message(message.from_user.id, "Нет такого пункта меню")
-        mainMenu(message)
+# @bot.message_handler(content_types=['text'])
+# def mainMenuHandler(message):
+    
+        # mainMenu(message)
 # /ИГРА
 
 
 
 # ПРОФИЛЬ
-def profileHandler(message):
-    global personId,personUname,personName,personAge,personDes,personMon,personLoc
-    updateGlobalVars(message.from_user.id)
-    if message.text == 'Назад↩️':
-        mainMenu(message)
-    elif message.text == 'Редактировать профиль⚙️':
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add('Имя и Фамилию', 'Username', 'Возраст', 'Описание', 'Назад')
-        msg = bot.send_message(message.from_user.id, "Что хотите редактировать?", reply_markup=markup)
-        bot.register_next_step_handler(msg, profileRegHandler)
-    elif message.text == 'Друзья и ЧС👥':
-        friends, enemies = get_friends_and_enemies_list(personUname)
-        friendslist = ''
-        enemieslist = ''
-        for i in friends.split():
-            data = get_data_from_bd_by_uname(i)
-            friendslist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+data[1]+'">['+data[1]+'] '+data[2]+'</a>\n'
-        for i in enemies.split():
-            data = get_data_from_bd_by_uname(i)
-            enemieslist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+data[1]+'">['+data[1]+'] '+data[2]+'</a>'
-        bot.send_message(message.from_user.id, "Друзья:\n"+friendslist, parse_mode="HTML",disable_web_page_preview = True)
-        bot.send_message(message.from_user.id, "В черном списке:\n"+enemieslist, parse_mode="HTML",disable_web_page_preview = True, reply_markup=chat_kb())
 def viewPerson(message, user_id=0):
     data = get_data_from_bd_by_uname(message)
     if data == 0:
@@ -569,10 +488,8 @@ def viewPerson(message, user_id=0):
         if data[0] == user_id:
             bot.send_message(user_id, 'Вы можете посмотреть свой профиль с помощью пункта меню "Профиль" в главном меню')
         else:
-            try:
-                bot.send_message(user_id, 'Username: <code>' + data[1] + '</code>\nИмя: '+data[2] + '\nВозраст: '+str(data[3]) + '\nОписание: '+data[4],parse_mode="HTML",reply_markup = relationShip_kb(get_uname_by_id(user_id), data[1]))
-            except:
-                bot.send_message(user_id, 'Такого персонажа нет в базе данных')
+            bot.send_message(user_id, 'Username: <code>' + data[1] + '</code>\nИмя: '+data[2] + '\nВозраст: '+str(data[3]) + '\nОписание: '+data[4],parse_mode="HTML",reply_markup = relationShip_kb(user_id, str(data[0])))
+
 def profileRegHandler(message):
     if message.text == 'Назад':
         mainMenu(message)
@@ -588,6 +505,9 @@ def profileRegHandler(message):
     elif message.text == 'Описание':
         msg = bot.send_message(message.from_user.id, "Введите новое описание: ")
         bot.register_next_step_handler(msg, changeDes)
+    else:
+        msg = bot.send_message(message.from_user.id, "Выберите пункт меню!")
+        bot.register_next_step_handler(msg, profileRegHandler)
 def changeName(message):
     val = message.text
     usid = message.from_user.id
@@ -707,7 +627,7 @@ def locationHandler(message):
         for i in range(len(personsId)):
             if personsId[i][0] == personId:
                 continue
-            bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Улица'</u>", parse_mode="HTML")
+            bot.send_message(personsId[i][0],'<i>'+personName+' вошел в локацию "Улица"</i>', parse_mode="HTML")
     elif message.text == locationlist[1][1]:
         bot.send_message(message.from_user.id, "Локация: Парк\nДовольно спокойное место, в самый раз чтобы отдохнуть от городской суеты", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "3")
@@ -715,7 +635,7 @@ def locationHandler(message):
         for i in range(len(personsId)):
             if personsId[i][0] == personId:
                 continue
-            bot.send_message(personsId[i][0],personName+" вошел в локацию 'Парк'")
+            bot.send_message(personsId[i][0],'<i>'+personName+' вошел в локацию "Парк" </i>',parse_mode="HTML")
     elif message.text == locationlist[1][2]:
         bot.send_message(message.from_user.id, "Локация: Кафе\nНебольшое кафе находящееся недалеко от вашего дома. Ни чем не приметная, но такая уютная", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "4")
@@ -723,7 +643,7 @@ def locationHandler(message):
         for i in range(len(personsId)):
             if personsId[i][0] == personId:
                 continue
-            bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Кафе'</u>", parse_mode="HTML")
+            bot.send_message(personsId[i][0],'<i>'+personName+' вошел в локацию "Кафе"</i>', parse_mode="HTML")
     elif message.text == locationlist[2][1]:
         bot.send_message(message.from_user.id, "Локация: Клуб\nС самого входа слышно музыку которая так и тянет танцевать!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "5")
@@ -731,7 +651,7 @@ def locationHandler(message):
         for i in range(len(personsId)):
             if personsId[i][0] == personId:
                 continue
-            bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Клуб'</u>", parse_mode="HTML")
+            bot.send_message(personsId[i][0],'<i>'+personName+' вошел в локацию "Клуб"</i>', parse_mode="HTML")
     elif message.text == locationlist[2][0]:
         bot.send_message(message.from_user.id, "Локация: Школа\nЗнания - сила!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "6")
@@ -739,7 +659,7 @@ def locationHandler(message):
         for i in range(len(personsId)):
             if personsId[i][0] == personId:
                 continue
-            bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Школа'</u>", parse_mode="HTML")
+            bot.send_message(personsId[i][0],'<i>'+personName+' вошел в локацию "Школа"</i>', parse_mode="HTML")
     elif message.text == locationlist[2][2]:
         bot.send_message(message.from_user.id, "Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "7")
@@ -748,8 +668,8 @@ def locationHandler(message):
         markup.add('!монетка','!кости')
         bot.send_message(message.from_user.id, "!монетка - обычная игра с шансом 50%\n!кости - шанс выиграть 1 к 6, но и приз будет с коэффициентом 6х", reply_markup=markup)
     else:
-        bot.send_message(message.from_user.id, "Нажми на пункт меню!")
-        mainMenu(message)
+        msg = bot.send_message(message.from_user.id, "Нажми на пункт меню!")
+        bot.register_next_step_handler(msg, locationHandler)
 def visitsHandler(message):
     if personUname == message.text:
         bot.send_message(message.from_user.id, 'Домой вы можете попасть с помощью пункта меню "Дом" в меню локаций')
@@ -780,7 +700,7 @@ def visitsHandler(message):
 
 
 
-# ЧАТЫ
+
 @bot.message_handler(content_types=['text'])
 def messagesHandler(message):
     error = 0
@@ -790,9 +710,87 @@ def messagesHandler(message):
         bot.send_message(message.from_user.id,'У тебя кажется нет персонажа.\nВведи /start')
         error = 1
     if error == 0:
-        global personId,personUname,personName,personAge,personDes,personMon,personLoc
+        global personId,personUname,personName,personAge,personDes,personMon,personLoc, locationlist
         updateGlobalVars(message.from_user.id)
-        if message.text[0] == '!':
+        
+        if message.text == 'Назад↩️':
+            mainMenu(message)
+        elif message.text == 'Редактировать профиль⚙️':
+            markup = ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add('Имя и Фамилию', 'Username', 'Возраст', 'Описание', 'Назад')
+            msg = bot.send_message(message.from_user.id, "Что хотите редактировать?", reply_markup=markup)
+            bot.register_next_step_handler(msg, profileRegHandler)
+        elif message.text == 'Друзья и ЧС👥':
+            friends, enemies = get_friends_and_enemies_list(personUname)
+            friendslist = ''
+            enemieslist = ''
+            for i in friends.split():
+                data = get_data_from_bd_by_uname(i)
+                friendslist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+data[1]+'">['+data[1]+'] '+data[2]+'</a>\n'
+            for i in enemies.split():
+                data = get_data_from_bd_by_uname(i)
+                enemieslist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+data[1]+'">['+data[1]+'] '+data[2]+'</a>'
+            bot.send_message(message.from_user.id, "Друзья:\n"+friendslist, parse_mode="HTML",disable_web_page_preview = True)
+            bot.send_message(message.from_user.id, "В черном списке:\n"+enemieslist, parse_mode="HTML",disable_web_page_preview = True, reply_markup=chat_kb())
+
+
+        elif message.text == 'Профиль👤':
+            markup = ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add('Друзья и ЧС👥', 'Назад↩️')
+            markup.add('Редактировать профиль⚙️')
+            bot.send_message(message.from_user.id, "\nUsername: <code>"+personUname+"</code>\nИмя: "+personName+"\nВозраст: "+str(personAge)+"\nБаланс: "+str(personMon)+"\nОписание: "+personDes, parse_mode="HTML",reply_markup=markup)
+            # bot.register_next_step_handler(msg, profileHandler)
+        elif message.text == 'Локации📍' or message.text.lower() == '!локации':
+            if personLoc != 0:
+                personsId = get_persons_in_loc_bd(personLoc)
+                for i in range(len(personsId)):
+                    if int(personsId[i][0]) == int(personId):
+                        continue
+                    try:
+                        bot.send_message(personsId[i][0],'<i>'+personName+" покинул локацию</i>", parse_mode="HTML")
+                    except:
+                        print(str(personsId[i][0])+"bot was blocked by that user 313")
+                update_loc_bd(message.from_user.id, "0")
+                personLoc = 0
+            markup = ReplyKeyboardMarkup(resize_keyboard=True)
+            time_now = datetime.datetime.now().time()
+            locationlist = [['Дом🏠', 'В гости🏘','Назад↩️'],['Улица🚙', 'Парк🏞', 'Кафе☕️'],['Школа✍️','Клуб🌃','Казино💸']]
+            if not((6 < int(personAge) <= 18) and ((schoolopen<=time_now) and (schoolclose>time_now))):
+                locationlist[2][0] = locationlist[2][0][0:len(locationlist[2][0])-2] + not_available_emoji
+            if not((18 <= int(personAge)) and ((clubopen<=time_now) and (clubclose>time_now))):
+                locationlist[2][1] = locationlist[2][1][0:len(locationlist[2][1])-1] + not_available_emoji
+            if not(18 <= int(personAge)):
+                locationlist[2][2] = locationlist[2][2][0:len(locationlist[2][2])-1] + not_available_emoji
+            for i in range(len(locationlist)):
+                if len(locationlist[i]) == 3:
+                    markup.add(locationlist[i][0],locationlist[i][1],locationlist[i][2])
+                if len(locationlist[i]) == 2:
+                    markup.add(locationlist[i][0],locationlist[i][1])
+                if len(locationlist[i]) == 1:
+                    markup.add(locationlist[i][0])
+            msg = bot.send_message(message.from_user.id, "Выберите локацию", reply_markup=markup)
+            bot.register_next_step_handler(msg, locationHandler)
+        elif message.text == 'Панель заработка🧮':
+            date_now = datetime.datetime.now().date()
+            date = date_now - datetime.timedelta(1)
+            try:
+                mdata = get_data_from_management(personId)
+            except:
+                businessStr = ''
+                for i in businessList:
+                    businessStr += str(i[1])+'-0 '
+                insert_new_person_in_management(personId,date_to_string(date), businessStr)
+            mdata = get_data_from_management(personId)
+            data = get_data_from_bd_by_id(personId)
+            datedelta = date_now - string_to_date(mdata[1])
+            datedeltafinc = date_now - string_to_date(mdata[3])
+            income_money = int(datedeltafinc.days) * int(mdata[2])
+            if datedelta.days >= 1:
+                bot.send_message(personId,'Вам доступен ежедневный приз размером в 25 RPCoin!', reply_markup=everydayPrize_kb())
+            bot.send_message(personId,'Баланс: '+str(data[5])+'\nДенег нокопилось: '+str(income_money)+'\nПассивный ежедневный доход: '+str(mdata[2]),reply_markup=management_kb())
+        
+        # ЧАТЫ
+        elif message.text[0] == '!':
             splitMessage = message.text.split()
             if message.text.lower() == '!меню':
                 mainMenu(message)
@@ -815,8 +813,8 @@ def messagesHandler(message):
                             if int(personMon)-int(splitMessage[2])>0:
                                 update_mon_bd(splitMessage[1], int(clientdata[5])+int(splitMessage[2]))
                                 update_mon_bd(personUname, int(personMon)-int(splitMessage[2]))
-                                bot.send_message(personId,'Вы перевели деньги персонажу '+clientdata[1]+' на сумму '+splitMessage[2])
-                                bot.send_message(get_id_by_uname(splitMessage[1]),'Персонаж '+personName+' перевел вам '+splitMessage[2]+" RPCoin")
+                                bot.send_message(personId,'<i>Вы перевели деньги персонажу '+clientdata[1]+' на сумму '+splitMessage[2]+'</i>',parse_mode="HTML")
+                                bot.send_message(get_id_by_uname(splitMessage[1]),'<i>Персонаж '+personName+' перевел вам '+splitMessage[2]+' RPCoin</i>',parse_mode="HTML")
                             else:
                                 bot.send_message(personId,'Не хватает денег')
             elif message.text.lower() == '!баланс':
@@ -854,8 +852,6 @@ def messagesHandler(message):
                     bot.send_message(personId,'Формат ввода команды: \n!Профиль [username]')
                 else:
                     viewPerson(splitMessage[1],personId)
-            elif splitMessage[0].lower() == '!локации':
-                mainMenuHandler(message)
 
             elif (splitMessage[0].lower() == '!сад') and (personLoc == personId):
                 try: 
@@ -888,26 +884,22 @@ def messagesHandler(message):
             elif message.text.lower() == '!кости':
                 if personLoc == 7:
                     bot.send_message(message.from_user.id, "Выбери ставку", reply_markup=casinoKostiBet_kb())
-        else:
-            if personLoc == 0:
-                bot.send_message(personId,'Что-то поломалось! Вы перенаправлены в главное меню!')
-                mainMenu(message)
-            else:
-                personsId = get_persons_in_loc_bd(personLoc)
-                myfriends, myenemies = get_friends_and_enemies_list(personUname)
-                for i in personsId:
-                    urfriends, urenemies = get_friends_and_enemies_list(i[1])
-                    if i[0] == personId:
-                        continue
-                    if  personUname in urenemies:
-                        bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
-                    else:
-                        if not(i[1] in myenemies):
-                        #     bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start='+personUname+'"> Вы не видите данное сообщение потому что '+personName+' добавил вас в ЧС</a>', parse_mode="HTML",disable_web_page_preview = True)
-                        # else:
-                            try:
-                                bot.send_message(i[0],'<b>'+'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a></b>: '+message.text, parse_mode="HTML",disable_web_page_preview = True)
-                            except:
-                                print(i[0],'не получается отправить сообщение этому пользователю')
+        elif int(personLoc) != 0:
+            personsId = get_persons_in_loc_bd(personLoc)
+            myfriends, myenemies = get_friends_and_enemies_list(personUname)
+            for i in personsId:
+                urfriends, urenemies = get_friends_and_enemies_list(i[1])
+                if i[0] == personId:
+                    continue
+                if  personUname in urenemies:
+                    bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
+                else:
+                    if not(i[1] in myenemies):
+                    #     bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start='+personUname+'"> Вы не видите данное сообщение потому что '+personName+' добавил вас в ЧС</a>', parse_mode="HTML",disable_web_page_preview = True)
+                    # else:
+                        try:
+                            bot.send_message(i[0],'<b>'+'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a></b>: '+message.text, parse_mode="HTML",disable_web_page_preview = True)
+                        except:
+                            print(i[0],'не получается отправить сообщение этому пользователю')
         
 # /ЧАТЫ
