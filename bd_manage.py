@@ -2,7 +2,7 @@ import sqlite3
 
 # dbAddress = "./db.sqlite" # for linux
 dbAddress = "C:/vscode/rpg-tg-bot/db.sqlite" #for windows
-
+# 1
 # (personId,personUname,personName,personAge,personDes,100,0)
 def insert_data_to_bd(id,uname,name,age,des,mon,loc):
     try:
@@ -30,14 +30,17 @@ def get_persons_in_loc_bd(loc):
     conn.close()
     return fetch_data
 def get_data_from_bd_by_id(id):
-    conn = sqlite3.connect(dbAddress)
-    cursor = conn.cursor()
-    sql = "SELECT * FROM persons WHERE id=?"
-    cursor.execute(sql, [(id)])
-    fetch_data = cursor.fetchall()
-    fetch_data_reg = fetch_data[0]
-    conn.close()
-    return fetch_data_reg
+    try:
+        conn = sqlite3.connect(dbAddress)
+        cursor = conn.cursor()
+        sql = "SELECT * FROM persons WHERE id=?"
+        cursor.execute(sql, [(id)])
+        fetch_data = cursor.fetchall()
+        fetch_data_reg = fetch_data[0]
+        conn.close()
+        return fetch_data_reg
+    except:
+        return 0
 def get_data_from_bd_by_uname(uname):
     try:
         conn = sqlite3.connect(dbAddress)
@@ -85,6 +88,16 @@ def update_mon_bd(uname, val):
 	sql = """UPDATE persons 
 			SET mon = ?
 			WHERE uname = ?"""
+	cursor.executemany(sql, data)
+	conn.commit()
+	conn.close()
+def update_mon_bd_by_id(id, val):
+	conn = sqlite3.connect(dbAddress)
+	cursor = conn.cursor()
+	data = [(val, id)]
+	sql = """UPDATE persons 
+			SET mon = ?
+			WHERE id = ?"""
 	cursor.executemany(sql, data)
 	conn.commit()
 	conn.close()
@@ -225,3 +238,104 @@ def del_enemy(uname, enemy):
     conn.commit()
     conn.close()
     return status
+def get_data_from_management(id):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    sql = "SELECT * FROM management WHERE id=?"
+    cursor.execute(sql, [(id)])
+    fetch_data = cursor.fetchall()
+    fetch_data_reg = fetch_data[0]
+    conn.close()
+    return fetch_data_reg
+def insert_new_person_in_management(id,date,businessStr):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(id,date,0,date,businessStr)]
+    sql = """INSERT INTO management
+                VALUES (?,?,?,?,?)"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def update_income(id,val):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(val, id)]
+    sql = """UPDATE management
+			SET income = ?
+			WHERE id = ?"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def update_prize_date(id,date):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(date, id)]
+    sql = """UPDATE management
+			SET prize_date = ?
+			WHERE id = ?"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def update_business_date(id,date):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(date, id)]
+    sql = """UPDATE management
+			SET business_date = ?
+			WHERE id = ?"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def update_business(id,date):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(date, id)]
+    sql = """UPDATE management
+			SET business = ?
+			WHERE id = ?"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+
+# GARDEN
+
+def get_data_from_gardening(id):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    sql = "SELECT * FROM gardening WHERE id=?"
+    cursor.execute(sql, [(id)])
+    fetch_data = cursor.fetchall()
+    fetch_data_reg = fetch_data[0]
+    conn.close()
+    return fetch_data_reg
+def insert_new_person_in_gardening(id,garden,date):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(id,garden,date)]
+    sql = """INSERT INTO gardening
+                VALUES (?,?,?)"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def update_garden(id,garden):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(garden, id)]
+    sql = """UPDATE gardening
+			SET garden = ?
+			WHERE id = ?"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def update_last_watering_date(id,date):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(date, id)]
+    sql = """UPDATE gardening
+			SET last_watering = ?
+			WHERE id = ?"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+
+# /GARDEN

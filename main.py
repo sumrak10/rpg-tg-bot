@@ -1,13 +1,8 @@
-from msilib.schema import Class
 from posixpath import split
-from re import A
 import requests, random, datetime, sys, time, argparse, os
 from colorama import Fore, Back, Style
 import telebot
-from telebot import apihelper
 from telebot.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-import datetime
-import random
 
 from bd_manage import *
 import config
@@ -23,8 +18,12 @@ personDes = ""
 personMon = ""
 personLoc = ""
 personsId = []
+trueSimInUname = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_'
+minUnameLen = 3
 
 # локации
+not_available_emoji = '❌'
+locationlist = []
 clubopen = datetime.time(18, 0)
 clubclose = datetime.time(6, 0)
 schoolopen = datetime.time(8, 0)
@@ -35,6 +34,12 @@ kosti_sides = []
 kosti_bet = 0
 # чаты
 productsList = [[],[],[['Вода',3],['Кола',5],['Кофе',5],['Шаурма',8]],[['Вода',3],['Кола',5],['Кофе',5],['Хот-дог',10],['Бургер',10],['Чизбургер',12],['Лаваш',15],['Суп мясной',15],['Суп овощной',13]],[['Вода',3],['Кола',5],['Кофе',5],['Водка',10],['Пиво',8],['Текила',12],['Джин',13],['Вино',12]]]
+businessList = [['Лавка с мороженным',25],['Мойка машин',50],['Кафе',500],['Ресторан',1000],['Сеть магазинов',10000],['Завод машин',100000],['Своя компания',500000],['Монополия компаний',1000000]]
+business_cost_factor = 75 # во сколько раз будет соотноситься ( ежедневный доход от бизнеса : цена покупки бизнеса )
+gardenList = [["🍅",1,2,4],["🧅",1,5,10],["🥒",1,10,20],["🥬",3,15,25],["🥕",5,20,30],["🍆",5,30,50],["🌽",10,45,70],["🧄",10,50,80],["🍓",10,60,90],["🥔",10,70,95],["🍉",20,90,160],["🍇",20,100,180],["🍎",30,150,280],["🍐",30,200,380],["🍑",30,500,950]]
+decay_factor = -3 # через сколько дней созревший урожай сгниет
+min_koef_sell_harvest = 0.75 # на сколько будет множиться рыночная стоимость товара (минимальный порог)
+max_koef_sell_harvest = 1.25 # (максимальный порог - соответсвенно)
 # /ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 
 
@@ -50,34 +55,58 @@ def getProductsPrice(productsList,product):
         if product.lower() == i[0].lower():
             price = i[1]
     return price
-def timedelta(stop,time_now):
-    stop = datetime.datetime(int(datetime.datetime.today().strftime('%Y')),int(datetime.datetime.today().strftime('%m')), int(datetime.datetime.today().strftime('%d')), int(stop.strftime('%H')), int(stop.strftime('%M')),0 )
-    diff = stop - time_now
-    diffins = diff.total_seconds()
-    return str(int(divmod(diffins, 3600)[0]))+':'+str(int(divmod(diffins, 60)[0]-(divmod(diffins, 3600)[0]*60)))
+def updateGlobalVars(uid):
+    global personId,personUname,personName,personAge,personDes,personMon,personLoc
+    data = get_data_from_bd_by_id(uid)
+    if data == 0:
+        bot.send_message(uid, 'Введи /start')
+        return 0
+    personId = data[0]
+    personUname = data[1]
+    personName = data[2]
+    personAge = data[3]
+    personDes = data[4]
+    personMon = data[5]
+    personLoc = data[6]
+def date_to_string(date):
+    return str(date.strftime('%d/%m/%Y'))
+def string_to_date(str):
+    d,m,y = str.split('/')
+    return datetime.date(int(y),int(m),int(d))
+def remake_garden(garden,cell,planttype=0, harvest=False):
+    garden = garden.split()
+    newgarden = ''
+    if harvest == False:
+        for i in range(len(garden)):
+            if int(i) == int(cell): 
+                newplant = str(planttype) +'-'+ date_to_string(datetime.datetime.now().date())
+                newgarden += newplant + ' '
+            else:
+                newgarden += garden[i] + ' '
+    else:
+        for i in range(len(garden)):
+            if int(i) == int(cell): 
+                newplant = '0-0'
+                newgarden += newplant + ' '
+            else:
+                newgarden += garden[i] + ' '
+    return newgarden
 # /ГЛОБАЛЬНЫЕ ФУНКЦИИ
 
 # РЕГИСТРАЦИЯ
 @bot.message_handler(commands=['start'])
 def start(message):
-    global personId, personUname,personName,personAge,personDes,personMon,personLoc,personsId
-    personId = ""
-    personUname = ""
-    personName = ""
-    personAge = ""
-    personDes = ""
-    personMon = ""
-    personLoc = ""
-    personsId = []
+    global personId
     personId = message.from_user.id
-    if len(message.text.split()) > 1:
-        viewPerson(message)
+    startdata = message.text[7:]
+    if startdata.split('-')[0] == 'viewPerson':
+        bot.delete_message(personId, message.message_id)
+        viewPerson(startdata.split('-')[1], personId)
     else:
-        try:
-            personData = get_data_from_bd_by_id(personId)
-            # bot.reply_to(message, "Привет я кажется тебя помню. \nНапиши /game чтобы начать играть!")
-            mainMenu(message)
-        except:
+        personData = get_data_from_bd_by_id(message.from_user.id)
+        # bot.reply_to(message, "Привет я кажется тебя помню. \nНапиши /game чтобы начать играть!")
+        # mainMenu(message)
+        if personData == 0:
             markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add('Привет! Я хочу создать персонажа!')
             msg = bot.send_message(message.from_user.id, "Привет! \nЯ вижу ты новенький, бегом создавать персонажа :)", reply_markup=markup)	
@@ -88,22 +117,31 @@ def createPerson(message):
 def setPersonName(message):
     global personName
     personName = message.text
-    msg = bot.send_message(message.from_user.id, 'Придумай уникальный идентификатор, он должен содержать только буквы английского алфавита и цифры \n(можно использовать такой же username как и у твоего телеграм аккаунта)')
+    msg = bot.send_message(message.from_user.id, 'Придумай уникальный идентификатор\nОн должен содержать только буквы английского алфавита a-z и цифры 0-9 так же нижние подчеркивания\nДолжен содержать более '+str(minUnameLen)+'х символов и не должен начинаться с цифры\n(можно использовать такой же username как и у твоего телеграм аккаунта)')
     bot.register_next_step_handler(msg, setPersonUname)
 def setPersonUname(message):
     global personUname
+    unameStatus = True
     personUname = message.text
-    try:
-        get_data_from_bd_by_uname(personUname)
+    for sim in personUname:
+        if not(sim in trueSimInUname):
+            unameStatus = False
+    if sim[0] in '1234567890':
+        unameStatus = False
+    data = get_data_from_bd_by_uname(personUname)
+    if ( data != 0 ) or ( unameStatus ):
         msg = bot.send_message(message.from_user.id, 'Увы, такой username занят, попробуй еще раз :(')
         bot.register_next_step_handler(msg, setPersonUname)
-    except:
+    if ( data == 0 ) or ( unameStatus ):
         msg = bot.send_message(message.from_user.id, 'А теперь придумаем возраст, '+personName+' :)')
         bot.register_next_step_handler(msg, setPersonAge)
 def setPersonAge(message):
     global personAge
     try:
         personAge = int(message.text)
+        if 0 <= personAge <= 120:
+            msg = bot.send_message(message.from_user.id, "А если серьезно? :(")
+            bot.register_next_step_handler(msg, setPersonAge)
         msg = bot.send_message(message.from_user.id, "Придумай описание своего персонажа\n (Текст должен быть не более 255 символов. Учти это!)")
         bot.register_next_step_handler(msg, initPerson)
     except:
@@ -112,9 +150,7 @@ def setPersonAge(message):
 def initPerson(message):
     global personDes
     personDes = message.text
-    if (insert_data_to_bd(personId,personUname,personName,personAge,personDes,100,0)):
-        print('-----------new person----------- 120')
-        print(personId,personUname,personName,personAge,personDes)
+    if (insert_data_to_bd(personId,personUname,personName,personAge,personDes,100,0)):\
         bot.reply_to(message, "Отлично, персонаж создан! Напишите /game чтобы начать играть!")
     else:
         bot.reply_to(message, "Возникла ошибка! Напишите /start чтобы попробовать еще раз!")
@@ -124,11 +160,11 @@ def initPerson(message):
 # КЛАВИАТУРЫ
 def mainMenu_kb():
 	markup = ReplyKeyboardMarkup(resize_keyboard=True)
-	markup.add('Профиль','Локации', 'Панель заработок')
+	markup.add('Профиль','Локации', 'Панель заработка')
 	return markup
 def chat_kb():
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add('!меню', '!помощь')
+    markup.add('!помощь', '!локации','!меню')
     return markup
 def relationShip_kb(uname,user):
     friends, enemies = get_friends_and_enemies_list(uname)
@@ -167,12 +203,115 @@ def casinoKostiSide_kb():
     markup.add(telebot.types.InlineKeyboardButton(text = '4', callback_data ='casino kosti side 4'),telebot.types.InlineKeyboardButton(text = '5', callback_data ='casino kosti side 5'),telebot.types.InlineKeyboardButton(text = '6', callback_data ='casino kosti side 6'))
     markup.add(telebot.types.InlineKeyboardButton(text = 'Готово', callback_data ='casino kosti ok'))
     return markup
+def everydayPrize_kb():
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать ежедневный приз!', callback_data ='management prize'))
+    return markup
+def management_kb():
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Купить бизнес', callback_data ='management get business'))
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать заработок', callback_data ='management get income'))
+    return markup
+def management_buy_kb():
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Вернуться в меню', callback_data ='management buy back'))
+    for i in businessList:
+        markup.add(telebot.types.InlineKeyboardButton(text = i[0]+' Цена: '+str(int(i[1])*business_cost_factor)+' Доход: '+str(i[1]), callback_data ='management buy '+str(i[1])))
+    return markup
+def garden_kb(garden):
+    markup = telebot.types.InlineKeyboardMarkup()
+    garden = garden.split()
+    garray = []
+    garray3 = []
+    k = 0
+    for i in range(5):
+        for j in range(3):
+            if str(garden[k].split('-')[0]) == '0':
+                txt = 'Посадить'
+                clbdata = 'plant ' + str(k)
+            else:
+                ddelta = datetime.datetime.now().date() - string_to_date(garden[k].split('-')[1])
+                days = int(gardenList[int(garden[k].split('-')[0])-1][1]) - int(ddelta.days)
+                if decay_factor <= days <= 0:
+                    txt = gardenList[int(garden[k].split('-')[0])-1][0] + ' Собрать'
+                    clbdata = 'harvest ' + str(k) + ' ' + str(garden[k].split('-')[0])
+                elif days < decay_factor:
+                    txt = gardenList[int(garden[k].split('-')[0])-1][0] + ' Убрать'
+                    clbdata = 'clean ' + str(k)
+                else:
+                    txt = gardenList[int(garden[k].split('-')[0])-1][0] + ' '+str(days) + ' дней'
+                    clbdata = 'manage ' + str(k)+ ' ' +str(garden[k].split('-')[0])
+            garray3.append([txt, clbdata])
+            k += 1
+        garray.append(garray3)
+        garray3 = []
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Полить', callback_data ='garden water 0'))
+    for i in range(5):
+        markup.add(telebot.types.InlineKeyboardButton(text = garray[i][0][0], callback_data ='garden '+garray[i][0][1]),telebot.types.InlineKeyboardButton(text = garray[i][1][0], callback_data ='garden '+garray[i][1][1]),telebot.types.InlineKeyboardButton(text = garray[i][2][0], callback_data ='garden '+garray[i][2][1]))
+    return markup
+def garden_plant_kb(cell):
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Отменить', callback_data ='garden buy back'))
+    for i in range(len(gardenList)):
+        markup.add(telebot.types.InlineKeyboardButton(text = '[ '+gardenList[i][0]+' ] Цена семян: '+str(gardenList[i][2])+' Время роста: '+str(gardenList[i][1])+'\n', callback_data ='garden buy '+str(cell)+' '+str(int(i)+1)))
+    return markup
+def garden_manage_kb(cell):
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Назад', callback_data ='garden buy back'))
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Убрать растение', callback_data ='garden clean '+str(cell)))
+    return markup
 # /КЛАВИАТУРЫ
+
+
 
 
 # КОЛБЕКИ
 @bot.callback_query_handler(func=lambda call: True)
 def callbackHandler(call):
+    if call.data.split()[0] == 'garden':
+        func = call.data.split()[1]
+        cell = call.data.split()[2]
+        data = get_data_from_bd_by_id(call.message.chat.id)
+        gdata = get_data_from_gardening(call.message.chat.id)
+        if func == 'plant':
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=garden_plant_kb(cell))
+        if func == 'buy':
+            if cell == 'back':
+                bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=garden_kb(gdata[1]))
+            else:
+                plantprice = gardenList[int(call.data.split()[3])-1][2]
+                if data[5] >= plantprice:
+                    planttype = call.data.split()[3]
+                    newg =  remake_garden(gdata[1],cell,planttype)
+                    update_garden(call.message.chat.id, newg)
+                    update_mon_bd_by_id(call.message.chat.id,str(int(data[5])-plantprice))
+                    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=garden_kb(newg))
+                else:
+                    bot.answer_callback_query(callback_query_id=call.id, text="Недостаточно средств для покупки данных семян! Ваш баланс: "+str(data[5]), show_alert=True)
+        if func == 'harvest':
+            plantnum = int(call.data.split()[3])
+            plantprice = int(gardenList[plantnum-1][3])
+            sellprice = random.randint(round(min_koef_sell_harvest*plantprice), round(max_koef_sell_harvest*plantprice))
+            update_mon_bd_by_id(call.message.chat.id, str(int(data[5])+int(sellprice)))
+            newg = remake_garden(gdata[1],cell,harvest=True)
+            update_garden(call.message.chat.id, newg)
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=garden_kb(newg))
+            bot.answer_callback_query(callback_query_id=call.id, text="Урожай собран и продан за: "+str(sellprice)+' RPCoin', show_alert=False)
+        if func == 'clean':
+            newg = remake_garden(gdata[1],cell,harvest=True)
+            update_garden(call.message.chat.id, newg)
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=garden_kb(newg))
+            bot.answer_callback_query(callback_query_id=call.id, text="Растение убрано!", show_alert=False)
+        if func == 'water':
+            if str(gdata[2]) == date_to_string(datetime.datetime.now().date()):
+                bot.answer_callback_query(callback_query_id=call.id, text="Вы уже поливали урожай сегодня!", show_alert=True)
+            else:
+                update_last_watering_date(call.message.chat.id, date_to_string(datetime.datetime.now().date()))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Последний полив: '+date_to_string(datetime.datetime.now().date()),reply_markup=garden_kb(gdata[1]))
+        if func == 'manage':
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=garden_manage_kb(cell))
+
+
     if call.data.split()[0] == 'relationship':
         func = call.data.split()[1]
         user = call.data.split()[2]
@@ -198,6 +337,8 @@ def callbackHandler(call):
             if status == 301:
                 bot.answer_callback_query(callback_query_id=call.id, text="Убран из ЧС", show_alert=False)
             bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=relationShip_kb(me,user))
+
+
     if call.data.split()[0] == 'casino':
         uid = call.message.chat.id
         data = get_data_from_bd_by_id(uid)
@@ -220,8 +361,6 @@ def callbackHandler(call):
                 else:
                     bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Увы и ах. Вы потеряли '+str(bet)+' RPCoin\nВаш баланс: '+str(data[5]-bet))
                     update_mon_bd(get_uname_by_id(uid),data[5]-bet)
-
-        # print(call.data.split(),kosti_bet,kosti_sides)
         if gametype == 'kosti':
             if call.data.split()[2] == 'bet':
                 global kosti_sides, kosti_bet
@@ -253,6 +392,55 @@ def callbackHandler(call):
                     else:
                         bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Вы потеряли: '+str(kosti_bet)+' RPCoin\nВаш баланс: '+str(data[5]-kosti_bet))
                         update_mon_bd(get_uname_by_id(uid),data[5]-kosti_bet)
+    if call.data.split()[0] == 'management':
+        mdata = get_data_from_management(call.message.chat.id)
+        data = get_data_from_bd_by_id(call.message.chat.id)
+        date_now = datetime.datetime.now().date()
+        datedelta = date_now - string_to_date(mdata[3])
+        income_money = int(datedelta.days) * int(mdata[2])
+        func = call.data.split()[1]
+        if len(call.data.split()) > 2:
+            func2 = call.data.split()[2]
+        if func == 'prize':
+            update_prize_date(call.message.chat.id,date_to_string(date_now))
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Приз получен!')
+            update_mon_bd(data[1],int(data[5])+25)
+        else:
+            if func == 'get':
+                if func2 == 'income':
+                    if mdata[2] != '0':
+                        update_mon_bd_by_id(call.message.chat.id,str(int(data[5])+income_money))
+                        update_business_date(call.message.chat.id,date_to_string(date_now))
+                        if int(datedelta.days) == 1:
+                            bot.answer_callback_query(callback_query_id=call.id, text="Вы уже собирали сегодня доход", show_alert=True)
+                        else:
+                            bot.answer_callback_query(callback_query_id=call.id, text="Доход: "+str(income_money)+' за '+str(datedelta.days)+' дней', show_alert=True)
+                        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Баланс: '+str(data[5])+'\nДенег нокопилось: '+str(income_money)+'\nПассивный ежедневный доход: '+str(mdata[2]),reply_markup=management_kb())
+                    else: 
+                        bot.answer_callback_query(callback_query_id=call.id, text="Нет пассивного дохода", show_alert=True)
+                elif func2 == 'business':
+                    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=management_buy_kb())
+            if func == 'buy':
+                if not(func2 == 'back'):
+                    cost = int(func2)
+                    if data[5] >= cost*business_cost_factor:
+                        busiList = mdata[4]
+                        busiList_new = ''
+                        for i in busiList.split():
+                            j = i.split('-')
+                            if int(j[0]) == int(cost):
+                                j[1] = str(int(j[1]) + 1)
+                            busiList_new += str(j[0])+'-'+str(j[1])+' '
+                        update_business(call.message.chat.id, busiList_new)
+                        income_new = int(mdata[2])+int(cost)
+                        update_income(call.message.chat.id, str(income_new))
+                        update_mon_bd_by_id(call.message.chat.id, str(int(data[5])-int(cost)*business_cost_factor))
+                        bot.answer_callback_query(callback_query_id=call.id, text="Вы успешно купили бизнес", show_alert=False)
+                        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Баланс: '+str(data[5])+'\nДенег нокопилось: '+str(income_money)+'\nПассивный ежедневный доход: '+str(income_new),reply_markup=management_buy_kb())
+                    else:
+                        bot.answer_callback_query(callback_query_id=call.id, text="Не достаточно средств! Ваш баланс: "+str(data[5]), show_alert=True)
+                else:
+                    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,reply_markup=management_kb())
 # /КОЛБЕКИ  
 
 
@@ -269,49 +457,79 @@ def mainMenu(message):
         error = 1
     if error == 0:
         global personId,personUname,personName,personAge,personDes,personMon,personLoc
-        personId = data[0]
-        personUname = data[1]
-        personName = data[2]
-        personAge = data[3]
-        personDes = data[4]
-        personMon = data[5]
-        personLoc = data[6]
+        updateGlobalVars(message.from_user.id)
 
-        personsId = get_persons_in_loc_bd(personLoc)
         if personLoc != 0:
+            personsId = get_persons_in_loc_bd(personLoc)
             for i in range(len(personsId)):
-                if personsId[i][0] == personId:
+                if int(personsId[i][0]) == int(personId):
                     continue
                 try:
                     bot.send_message(personsId[i][0],'<u>'+personName+" покинул локацию</u>", parse_mode="HTML")
                 except:
                     print(str(personsId[i][0])+"bot was blocked by that user 182")
             update_loc_bd(message.from_user.id, "0")
+            personLoc = 0
 
         msg = bot.send_message(message.from_user.id, "Главное меню:", reply_markup=mainMenu_kb())
         bot.register_next_step_handler(msg, mainMenuHandler)
 def mainMenuHandler(message):
-    global personId,personUname,personName,personAge,personDes,personMon,personLoc
+    global personId,personUname,personName,personAge,personDes,personMon,personLoc, locationlist
+    updateGlobalVars(message.from_user.id)
     if message.text == 'Профиль':
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('Редактировать профиль','Друзья и ЧС', 'Назад')
-        msg = bot.send_message(message.from_user.id, "Имя: "+personName+"\nUsername: "+personUname+"\nВозраст: "+str(personAge)+"\nОписание: "+personDes+"\nБаланс: "+str(personMon), reply_markup=markup)
+        msg = bot.send_message(message.from_user.id, "\nUsername: <code>"+personUname+"</code>\nИмя: "+personName+"\nВозраст: "+str(personAge)+"\nБаланс: "+str(personMon)+"\nОписание: "+personDes, parse_mode="HTML",reply_markup=markup)
         bot.register_next_step_handler(msg, profileHandler)
-    elif message.text == 'Локации':
+    elif message.text == 'Локации' or message.text.lower() == '!локации':
+        if personLoc != 0:
+            personsId = get_persons_in_loc_bd(personLoc)
+            for i in range(len(personsId)):
+                if int(personsId[i][0]) == int(personId):
+                    continue
+                try:
+                    bot.send_message(personsId[i][0],'<u>'+personName+" покинул локацию</u>", parse_mode="HTML")
+                except:
+                    print(str(personsId[i][0])+"bot was blocked by that user 313")
+            update_loc_bd(message.from_user.id, "0")
+            personLoc = 0
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         time_now = datetime.datetime.now().time()
-        locationlist = ['Дом', 'В гости', 'Улица', 'Парк', 'Кафе']
-        if (6 < personAge <= 18) or ((schoolopen<=time_now) or (schoolclose>time_now)):
-            locationlist.append('Школа')
-        if (18 <= personAge) or((clubopen<=time_now) or (clubclose>time_now)):
-            locationlist.append('Клуб')
-        if 18 <= personAge:
-            locationlist.append('Казино')
-        locationlist.append('Назад')
-        for i in locationlist:
-            markup.add(i)
+        locationlist = [['Дом🏠', 'В гости🏘','Назад↩️'],['Улица🚙', 'Парк🏞', 'Кафе☕️'],['Школа✍️','Клуб🌃','Казино💸']]
+        if not((6 < int(personAge) <= 18) and ((schoolopen<=time_now) and (schoolclose>time_now))):
+            locationlist[2][0] = locationlist[2][0][0:len(locationlist[2][0])-2] + not_available_emoji
+        if not((18 <= int(personAge)) and ((clubopen<=time_now) and (clubclose>time_now))):
+            locationlist[2][1] = locationlist[2][1][0:len(locationlist[2][1])-1] + not_available_emoji
+        if not(18 <= int(personAge)):
+            locationlist[2][2] = locationlist[2][2][0:len(locationlist[2][2])-1] + not_available_emoji
+        for i in range(len(locationlist)):
+            if len(locationlist[i]) == 3:
+                markup.add(locationlist[i][0],locationlist[i][1],locationlist[i][2])
+            if len(locationlist[i]) == 2:
+                markup.add(locationlist[i][0],locationlist[i][1])
+            if len(locationlist[i]) == 1:
+                markup.add(locationlist[i][0])
         msg = bot.send_message(message.from_user.id, "Выберите локацию", reply_markup=markup)
         bot.register_next_step_handler(msg, locationHandler)
+    elif message.text == 'Панель заработка':
+        date_now = datetime.datetime.now().date()
+        date = date_now - datetime.timedelta(1)
+        try:
+            mdata = get_data_from_management(personId)
+        except:
+            businessStr = ''
+            for i in businessList:
+                businessStr += str(i[1])+'-0 '
+            insert_new_person_in_management(personId,date_to_string(date), businessStr)
+        mdata = get_data_from_management(personId)
+        data = get_data_from_bd_by_id(personId)
+        datedelta = date_now - string_to_date(mdata[1])
+        datedeltafinc = date_now - string_to_date(mdata[3])
+        income_money = int(datedeltafinc.days) * int(mdata[2])
+        if datedelta.days >= 1:
+            bot.send_message(personId,'Вам доступен ежедневный приз размером в 25 RPCoin!', reply_markup=everydayPrize_kb())
+        bot.send_message(personId,'Баланс: '+str(data[5])+'\nДенег нокопилось: '+str(income_money)+'\nПассивный ежедневный доход: '+str(mdata[2]),reply_markup=management_kb())
+        mainMenu(message)
     else:
         bot.send_message(message.from_user.id, "Нет такого пункта меню")
         mainMenu(message)
@@ -321,6 +539,8 @@ def mainMenuHandler(message):
 
 # ПРОФИЛЬ
 def profileHandler(message):
+    global personId,personUname,personName,personAge,personDes,personMon,personLoc
+    updateGlobalVars(message.from_user.id)
     if message.text == 'Назад':
         mainMenu(message)
     elif message.text == 'Редактировать профиль':
@@ -334,18 +554,14 @@ def profileHandler(message):
         enemieslist = ''
         for i in friends.split():
             data = get_data_from_bd_by_uname(i)
-            friendslist += '<a href="t.me/SmrkRP_bot?start='+data[1]+'">['+data[1]+'] '+data[2]+'</a>\n'
+            friendslist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+data[1]+'">['+data[1]+'] '+data[2]+'</a>\n'
         for i in enemies.split():
             data = get_data_from_bd_by_uname(i)
-            enemieslist += '<a href="t.me/SmrkRP_bot?start='+data[1]+'">['+data[1]+'] '+data[2]+'</a>'
+            enemieslist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+data[1]+'">['+data[1]+'] '+data[2]+'</a>'
         bot.send_message(message.from_user.id, "Друзья:\n"+friendslist, parse_mode="HTML",disable_web_page_preview = True)
         bot.send_message(message.from_user.id, "В черном списке:\n"+enemieslist, parse_mode="HTML",disable_web_page_preview = True, reply_markup=chat_kb())
 def viewPerson(message, user_id=0):
-    try:
-        data = get_data_from_bd_by_uname(message.text.split()[1])
-        user_id = message.from_user.id
-    except:
-        data = get_data_from_bd_by_uname(message)
+    data = get_data_from_bd_by_uname(message)
     if data == 0:
         bot.send_message(user_id, 'Такого персонажа нет в базе данных')
     else:
@@ -353,7 +569,7 @@ def viewPerson(message, user_id=0):
             bot.send_message(user_id, 'Вы можете посмотреть свой профиль с помощью пункта меню "Профиль" в главном меню')
         else:
             try:
-                bot.send_message(user_id, 'Username: ' + data[1] + '\nИмя: '+data[2] + '\nВозраст: '+str(data[3]) + '\nОписание: '+data[4],reply_markup = relationShip_kb(get_uname_by_id(user_id), data[1]))
+                bot.send_message(user_id, 'Username: <code>' + data[1] + '</code>\nИмя: '+data[2] + '\nВозраст: '+str(data[3]) + '\nОписание: '+data[4],parse_mode="HTML",reply_markup = relationShip_kb(get_uname_by_id(user_id), data[1]))
             except:
                 bot.send_message(user_id, 'Такого персонажа нет в базе данных')
 def profileRegHandler(message):
@@ -391,25 +607,39 @@ def changeName(message):
 def changeUname(message):
     val = message.text
     usid = message.from_user.id
-    try:
-        conn = sqlite3.connect(dbAddress)
-        cursor = conn.cursor()
-        data = [(val, usid)]
-        sql = """UPDATE persons 
-                SET uname = ?
-                WHERE id = ?"""
-        cursor.executemany(sql, data)
-        sql = """UPDATE relationship
-                SET uname = ?
-                WHERE id = ?"""
-        cursor.executemany(sql, data)
-        conn.commit()
-        conn.close()
-        bot.send_message(message.from_user.id, "Username успешно изменен")
-        mainMenu(message)
-    except:
-        bot.send_message(message.from_user.id, "Такой username уже занят!")
+    if len(val) <= minUnameLen:
+        bot.send_message(message.from_user.id, "Твой username должен быть не менее "+str(minUnameLen)+"х символов. Придумай другой соответсвующий правилам")
         bot.register_next_step_handler(message, changeUname)
+    else:
+        unameStatus = True
+        for sim in val:
+            if not(sim in trueSimInUname):
+                unameStatus = False
+        if val[0] in '1234567890':
+            unameStatus = False
+        try:
+            if unameStatus:
+                conn = sqlite3.connect(dbAddress)
+                cursor = conn.cursor()
+                data = [(val, usid)]
+                sql = """UPDATE persons 
+                        SET uname = ?
+                        WHERE id = ?"""
+                cursor.executemany(sql, data)
+                sql = """UPDATE relationship
+                        SET uname = ?
+                        WHERE id = ?"""
+                cursor.executemany(sql, data)
+                conn.commit()
+                conn.close()
+                bot.send_message(message.from_user.id, "Username успешно изменен")
+                mainMenu(message)
+            else:
+                bot.send_message(message.from_user.id, "В username присутсвуют недопустимые символы или он начинается с цифры. Придумай другой соответсвующий правилам")
+                bot.register_next_step_handler(message, changeUname)
+        except:
+            bot.send_message(message.from_user.id, "Такой username уже занят!")
+            bot.register_next_step_handler(message, changeUname)
 def changeAge(message):
     val = message.text
     usid = message.from_user.id
@@ -451,22 +681,25 @@ def changeDes(message):
 
 # ЛОКАЦИИ
 def locationHandler(message):
-    if message.text == 'Назад':
+    if message.text == locationlist[0][2]:
         mainMenu(message)
-    elif message.text == 'Дом':
-        bot.send_message(message.from_user.id, "Локация: Ваш дом"+"\n", reply_markup=chat_kb())
+    elif message.text[len(message.text)-1:] == not_available_emoji:
+        bot.send_message(message.from_user.id, 'Локация '+message.text[0:len(message.text)-1]+' не доступна вам в данный момент')
+        mainMenu(message)
+    elif message.text == locationlist[0][0]:
+        bot.send_message(message.from_user.id, "Локация: "+locationlist[0][0]+"\n", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, message.from_user.id)
         personsId = get_persons_in_loc_bd(message.from_user.id)
         for i in range(len(personsId)):
             if personsId[i][0] == personId:
                 continue
             bot.send_message(personsId[i][0],'<u>'+personName+" пришел домой</u>", parse_mode="HTML")
-    elif message.text == 'В гости':
+    elif message.text == locationlist[0][1]:
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('Назад')
         msg = bot.send_message(message.from_user.id, "Впишите username персонажа к которому вы хотите пойти в гости", reply_markup=markup)
         bot.register_next_step_handler(msg, visitsHandler)
-    elif message.text == 'Улица': 
+    elif message.text == locationlist[1][0]: 
         bot.send_message(message.from_user.id, "Локация: Улица\nБольшая широкая улица кишащая толпами людей которые вечно куда-то спешат", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "2")
         personsId = get_persons_in_loc_bd(2)
@@ -474,7 +707,7 @@ def locationHandler(message):
             if personsId[i][0] == personId:
                 continue
             bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Улица'</u>", parse_mode="HTML")
-    elif message.text == 'Парк':
+    elif message.text == locationlist[1][1]:
         bot.send_message(message.from_user.id, "Локация: Парк\nДовольно спокойное место, в самый раз чтобы отдохнуть от городской суеты", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "3")
         personsId = get_persons_in_loc_bd(3)
@@ -482,7 +715,7 @@ def locationHandler(message):
             if personsId[i][0] == personId:
                 continue
             bot.send_message(personsId[i][0],personName+" вошел в локацию 'Парк'")
-    elif message.text == 'Кафе':
+    elif message.text == locationlist[1][2]:
         bot.send_message(message.from_user.id, "Локация: Кафе\nНебольшое кафе находящееся недалеко от вашего дома. Ни чем не приметная, но такая уютная", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "4")
         personsId = get_persons_in_loc_bd(4)
@@ -490,7 +723,7 @@ def locationHandler(message):
             if personsId[i][0] == personId:
                 continue
             bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Кафе'</u>", parse_mode="HTML")
-    elif message.text == 'Клуб':
+    elif message.text == locationlist[2][1]:
         bot.send_message(message.from_user.id, "Локация: Клуб\nС самого входа слышно музыку которая так и тянет танцевать!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "5")
         personsId = get_persons_in_loc_bd(5)
@@ -498,7 +731,7 @@ def locationHandler(message):
             if personsId[i][0] == personId:
                 continue
             bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Клуб'</u>", parse_mode="HTML")
-    elif message.text == 'Школа':
+    elif message.text == locationlist[2][0]:
         bot.send_message(message.from_user.id, "Локация: Школа\nЗнания - сила!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "6")
         personsId = get_persons_in_loc_bd(6)
@@ -506,12 +739,12 @@ def locationHandler(message):
             if personsId[i][0] == personId:
                 continue
             bot.send_message(personsId[i][0],'<u>'+personName+" вошел в локацию 'Школа'</u>", parse_mode="HTML")
-    elif message.text == 'Казино':
+    elif message.text == locationlist[2][2]:
         bot.send_message(message.from_user.id, "Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "7")
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add('!помощь','!локации','!меню')
         markup.add('!монетка','!кости')
-        markup.add('!меню','!помощь')
         bot.send_message(message.from_user.id, "!монетка - обычная игра с шансом 50%\n!кости - шанс выиграть 1 к 6, но и приз будет с коэффициентом 6х", reply_markup=markup)
     else:
         bot.send_message(message.from_user.id, "Нажми на пункт меню!")
@@ -519,6 +752,8 @@ def locationHandler(message):
 def visitsHandler(message):
     if personUname == message.text:
         bot.send_message(message.from_user.id, 'Домой вы можете попасть с помощью пункта меню "Дом" в меню локаций')
+        mainMenu(message)
+    elif message.text == 'Назад':
         mainMenu(message)
     else:
         try:
@@ -554,13 +789,8 @@ def messagesHandler(message):
         bot.send_message(message.from_user.id,'У тебя кажется нет персонажа.\nВведи /start')
         error = 1
     if error == 0:
-        personId = data[0]
-        personUname = data[1]
-        personName = data[2]
-        personAge = data[3]
-        personDes = data[4]
-        personMon = data[5]
-        personLoc = data[6]
+        global personId,personUname,personName,personAge,personDes,personMon,personLoc
+        updateGlobalVars(message.from_user.id)
         if message.text[0] == '!':
             splitMessage = message.text.split()
             if message.text.lower() == '!меню':
@@ -594,7 +824,7 @@ def messagesHandler(message):
                 personsId = get_persons_in_loc_bd(personLoc)
                 personlist = ''
                 for i in personsId:
-                    personlist += '<a href="t.me/SmrkRP_bot?start='+i[1]+'">'+i[2]+'</a>\n'
+                    personlist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+i[1]+'">'+i[2]+'</a>\n'
                 bot.send_message(personId,'В локации находятся: \n'+personlist, parse_mode="HTML",disable_web_page_preview = True)
             elif message.text.lower() == '!время':
                 time_now = datetime.datetime.now().time()
@@ -623,6 +853,24 @@ def messagesHandler(message):
                     bot.send_message(personId,'Формат ввода команды: \n!Профиль [username]')
                 else:
                     viewPerson(splitMessage[1],personId)
+            elif splitMessage[0].lower() == '!локации':
+                mainMenuHandler(message)
+
+            elif (splitMessage[0].lower() == '!сад') and (personLoc == personId):
+                try: 
+                    gdata = get_data_from_gardening(personId)
+                except:
+                    insert_new_person_in_gardening(personId,'0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 ', date_to_string(datetime.datetime.now().date()))
+                    gdata = get_data_from_gardening(personId)
+                last_watering =  datetime.datetime.now().date() - string_to_date(gdata[2])
+                print(last_watering.days)
+                if int(last_watering.days) > 1:
+                    update_garden(personId,'0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 ')
+                    gdata = get_data_from_gardening(personId)
+                    bot.send_message(personId,'Вы не поливали сад более 1 дня поэтому весь урожай высох!',reply_markup=garden_kb(gdata[1]))
+                else:
+                    bot.send_message(personId,'Последний полив: '+gdata[2],reply_markup=garden_kb(gdata[1]))
+
             elif message.text.lower() == '!помощь':
                 bot.send_message(personId,"""
 <code>!меню</code> - возвращает вас в главное меню\n
@@ -632,6 +880,7 @@ def messagesHandler(message):
 <code>!время</code> - показывает текущее время\n
 <code>!профиль</code> [username] - показывает профиль персонажа.\n
 <code>!помощь</code> - <tg-spoiler>выводит данный текст</tg-spoiler>""",parse_mode="HTML")
+# казино
             elif message.text.lower() == '!монетка':
                 if personLoc == 7:
                     bot.send_message(message.from_user.id, "Выбери ставку", reply_markup=casinoMonetkaBet_kb())
@@ -650,13 +899,13 @@ def messagesHandler(message):
                     if i[0] == personId:
                         continue
                     if  personUname in urenemies:
-                        bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start='+personUname+'">'+personName+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
+                        bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
                     else:
                         if not(i[1] in myenemies):
                         #     bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start='+personUname+'"> Вы не видите данное сообщение потому что '+personName+' добавил вас в ЧС</a>', parse_mode="HTML",disable_web_page_preview = True)
                         # else:
                             try:
-                                bot.send_message(i[0],'<b>'+'<a href="t.me/SmrkRP_bot?start='+personUname+'">'+personName+'</a></b>: '+message.text, parse_mode="HTML",disable_web_page_preview = True)
+                                bot.send_message(i[0],'<b>'+'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a></b>: '+message.text, parse_mode="HTML",disable_web_page_preview = True)
                             except:
                                 print(i[0],'не получается отправить сообщение этому пользователю')
         
