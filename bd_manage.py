@@ -2,7 +2,7 @@ import sqlite3
 
 # dbAddress = "./db.sqlite" # for linux
 dbAddress = "C:/vscode/rpg-tg-bot/db.sqlite" #for windows
-# 1
+# 2
 # (personId,personUname,personName,personAge,personDes,100,0)
 def insert_data_to_bd(id,uname,name,age,des,mon,loc):
     try:
