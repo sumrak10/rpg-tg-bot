@@ -160,7 +160,7 @@ def initPerson(message):
 # КЛАВИАТУРЫ
 def mainMenu_kb():
 	markup = ReplyKeyboardMarkup(resize_keyboard=True)
-	markup.add('Профиль','Локации', 'Панель заработка')
+	markup.add('Профиль👤','Локации📍', 'Панель заработка🧮')
 	return markup
 def chat_kb():
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -476,12 +476,13 @@ def mainMenu(message):
 def mainMenuHandler(message):
     global personId,personUname,personName,personAge,personDes,personMon,personLoc, locationlist
     updateGlobalVars(message.from_user.id)
-    if message.text == 'Профиль':
+    if message.text == 'Профиль👤':
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add('Редактировать профиль','Друзья и ЧС', 'Назад')
+        markup.add('Друзья и ЧС👥', 'Назад↩️')
+        markup.add('Редактировать профиль⚙️')
         msg = bot.send_message(message.from_user.id, "\nUsername: <code>"+personUname+"</code>\nИмя: "+personName+"\nВозраст: "+str(personAge)+"\nБаланс: "+str(personMon)+"\nОписание: "+personDes, parse_mode="HTML",reply_markup=markup)
         bot.register_next_step_handler(msg, profileHandler)
-    elif message.text == 'Локации' or message.text.lower() == '!локации':
+    elif message.text == 'Локации📍' or message.text.lower() == '!локации':
         if personLoc != 0:
             personsId = get_persons_in_loc_bd(personLoc)
             for i in range(len(personsId)):
@@ -511,7 +512,7 @@ def mainMenuHandler(message):
                 markup.add(locationlist[i][0])
         msg = bot.send_message(message.from_user.id, "Выберите локацию", reply_markup=markup)
         bot.register_next_step_handler(msg, locationHandler)
-    elif message.text == 'Панель заработка':
+    elif message.text == 'Панель заработка🧮':
         date_now = datetime.datetime.now().date()
         date = date_now - datetime.timedelta(1)
         try:
@@ -541,14 +542,14 @@ def mainMenuHandler(message):
 def profileHandler(message):
     global personId,personUname,personName,personAge,personDes,personMon,personLoc
     updateGlobalVars(message.from_user.id)
-    if message.text == 'Назад':
+    if message.text == 'Назад↩️':
         mainMenu(message)
-    elif message.text == 'Редактировать профиль':
+    elif message.text == 'Редактировать профиль⚙️':
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('Имя и Фамилию', 'Username', 'Возраст', 'Описание', 'Назад')
         msg = bot.send_message(message.from_user.id, "Что хотите редактировать?", reply_markup=markup)
         bot.register_next_step_handler(msg, profileRegHandler)
-    elif message.text == 'Друзья и ЧС':
+    elif message.text == 'Друзья и ЧС👥':
         friends, enemies = get_friends_and_enemies_list(personUname)
         friendslist = ''
         enemieslist = ''
