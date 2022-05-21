@@ -54,5 +54,5 @@ dbAddress = "C:/vscode/rpg-tg-bot/db.sqlite"
 # print(datetime.now() - start_time)
 
 
-import random
-random.ran
+from sys import platform
+print(platform)
