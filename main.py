@@ -7,7 +7,18 @@ from diagram_generate import generate_diagram_picture
 from bd_manage import *
 import config
 
+from sys import platform
+
+
 bot = telebot.TeleBot(config.token)
+
+
+if platform == 'win32':
+    oslink = 'rpg-tg-bot/'
+elif platform == 'linux':
+    oslink = './'
+else:
+    print("THIS PLATFORM DON'T SUPPORTED (main.py)")
 
 # ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 personId = ""
@@ -160,7 +171,7 @@ def viewStock(suname,uid):
         for stock in mstock.split():
             if suname in stock:
                 user_amount = stock.split('-')[1]
-        bot.send_photo(personId,open('rpg-tg-bot/media/img/diagrams/'+sname+'.png','rb'), caption='[<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>] '+sname+'\nПериод '+sdates[0].replace('/','.')+' - '+sdates[-1].replace('/','.')+'\nЦена: '+str(sprice)+RPCoin_emoji+'\nДоступно к покупке: '+str(samount)+'шт.\nУ вас в наличии:'+str(user_amount)+'шт.',reply_markup=stock_buy_sell_kb(suname,user_amount),parse_mode="HTML" )
+        bot.send_photo(personId,open(oslink+'media/img/diagrams/'+sname+'.png','rb'), caption='[<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>] '+sname+'\nПериод '+sdates[0].replace('/','.')+' - '+sdates[-1].replace('/','.')+'\nЦена: '+str(sprice)+RPCoin_emoji+'\nДоступно к покупке: '+str(samount)+'шт.\nУ вас в наличии:'+str(user_amount)+'шт.',reply_markup=stock_buy_sell_kb(suname,user_amount),parse_mode="HTML" )
     else:
         bot.send_message(uid, 'Акции с таким тикетом не было найдено!')
 def isChannelMember(uid):
@@ -894,7 +905,7 @@ def locationHandler(message):
         msg = bot.send_message(message.from_user.id, "Впишите username персонажа к которому вы хотите пойти в гости", reply_markup=markup)
         bot.register_next_step_handler(msg, visitsHandler)
     elif message.text == locationlist[1][0]: 
-        bot.send_photo(message.from_user.id, open('rpg-tg-bot/media/img/locations/'+str(2)+'.jpg','rb'), caption="Локация: Улица\nБольшая широкая улица кишащая толпами людей которые вечно куда-то спешат", reply_markup=chat_kb())
+        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(2)+'.jpg','rb'), caption="Локация: Улица\nБольшая широкая улица кишащая толпами людей которые вечно куда-то спешат", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "2")
         personsId = get_persons_in_loc_bd(2)
         for i in range(len(personsId)):
@@ -902,7 +913,7 @@ def locationHandler(message):
                 continue
             bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Улица"</i>', parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[1][1]:
-        bot.send_photo(message.from_user.id, open('rpg-tg-bot/media/img/locations/'+str(3)+'.jpg','rb'), caption="Локация: Парк\nДовольно спокойное место, в самый раз чтобы отдохнуть от городской суеты", reply_markup=chat_kb())
+        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(3)+'.jpg','rb'), caption="Локация: Парк\nДовольно спокойное место, в самый раз чтобы отдохнуть от городской суеты", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "3")
         personsId = get_persons_in_loc_bd(3)
         for i in range(len(personsId)):
@@ -910,7 +921,7 @@ def locationHandler(message):
                 continue
             bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Парк" </i>',parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[1][2]:
-        bot.send_photo(message.from_user.id, open('rpg-tg-bot/media/img/locations/'+str(4)+'.jpg','rb'), caption="Локация: Кафе\nНебольшое кафе находящееся недалеко от вашего дома. Ни чем не приметная, но такая уютная", reply_markup=chat_kb())
+        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(4)+'.jpg','rb'), caption="Локация: Кафе\nНебольшое кафе находящееся недалеко от вашего дома. Ни чем не приметная, но такая уютная", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "4")
         personsId = get_persons_in_loc_bd(4)
         for i in range(len(personsId)):
@@ -918,7 +929,7 @@ def locationHandler(message):
                 continue
             bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Кафе"</i>', parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[2][1]:
-        bot.send_photo(message.from_user.id, open('rpg-tg-bot/media/img/locations/'+str(5)+'.jpg','rb'), caption="Локация: Клуб\nС самого входа слышно музыку которая так и тянет танцевать!", reply_markup=chat_kb())
+        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(5)+'.jpg','rb'), caption="Локация: Клуб\nС самого входа слышно музыку которая так и тянет танцевать!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "5")
         personsId = get_persons_in_loc_bd(5)
         for i in range(len(personsId)):
@@ -926,7 +937,7 @@ def locationHandler(message):
                 continue
             bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Клуб"</i>', parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[2][0]:
-        bot.send_photo(message.from_user.id, open('rpg-tg-bot/media/img/locations/'+str(6)+'.jpg','rb'), caption="Локация: Школа\nЗнания - сила!", reply_markup=chat_kb())
+        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(6)+'.jpg','rb'), caption="Локация: Школа\nЗнания - сила!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "6")
         personsId = get_persons_in_loc_bd(6)
         for i in range(len(personsId)):
@@ -934,14 +945,14 @@ def locationHandler(message):
                 continue
             bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Школа"</i>', parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[2][2]:
-        bot.send_photo(message.from_user.id, open('rpg-tg-bot/media/img/locations/'+str(7)+'.jpg','rb'), caption="Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
+        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(7)+'.jpg','rb'), caption="Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "7")
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('!помощь','!локации','!меню')
         markup.add('!монетка','!кости')
         bot.send_message(message.from_user.id, "!монетка - обычная игра с шансом 50%\n!кости - шанс выиграть 1 к 6, но и приз будет с коэффициентом 6х", reply_markup=markup)
     elif message.text == locationlist[3][0]:
-        bot.send_photo(message.from_user.id, open('rpg-tg-bot/media/img/locations/'+str(8)+'.jpg','rb'), caption="Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
+        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(8)+'.jpg','rb'), caption="Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "8")
     else:
         msg = bot.send_message(message.from_user.id, "Нажми на пункт меню!")
