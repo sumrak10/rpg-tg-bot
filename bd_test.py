@@ -1,4 +1,6 @@
 import sqlite3
+
+from numpy import number
 from bd_manage import *
 # dbAddress = "./db.sqlite"
 dbAddress = "C:/vscode/rpg-tg-bot/db.sqlite"
@@ -39,3 +41,18 @@ dbAddress = "C:/vscode/rpg-tg-bot/db.sqlite"
 # cursor.execute(sql)
 # conn.commit()
 # conn.close()
+
+
+# from datetime import datetime
+
+# start_time = datetime.now()
+# a= 0 
+# #Тут выполняются действия
+# for i in range(100000000):
+#     a = a + i
+
+# print(datetime.now() - start_time)
+
+
+import random
+random.ran
