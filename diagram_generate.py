@@ -1,4 +1,13 @@
 from PIL import Image, ImageDraw, ImageFont
+from sys import platform
+
+
+if platform == 'win32':
+    oslink = 'rpg-tg-bot/'
+elif platform == 'linux':
+    oslink = './'
+else:
+    print("THIS PLATFORM DON'T SUPPORTED (diagram_generate.py)")
 
 def generate_diagram_picture(nums, picturename):
     def mapNum(x,fromLow,fromHigh,toLow,toHigh):
@@ -53,6 +62,6 @@ def generate_diagram_picture(nums, picturename):
         last_ph = ph
         k+=1
 
-    img.save('rpg-tg-bot/media/img/diagrams/'+picturename+'.png')
+    img.save(oslink+'media/img/diagrams/'+picturename+'.png')
 
 # generate_diagram_picture([10,10,10,10,10,10],'1')
