@@ -15,8 +15,10 @@ def generate_diagram_picture(nums, picturename):
     w,h = 1400,700
     fontsize = round(h / 30)
     img = Image.new('RGB', (w,h), 'white')
-    font = ImageFont.truetype("arial.ttf",size=fontsize)
-
+    try:
+        font = ImageFont.truetype("arial.ttf",size=fontsize)
+    except:
+        font = ImageFont.load_default()
     draw = ImageDraw.Draw(img)
     nmin = min(nums)//10*10+round(min(nums)%10/10)*10
     nmax = max(nums)//10*10+round(max(nums)%10/10)*10
