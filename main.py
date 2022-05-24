@@ -1005,14 +1005,14 @@ def messagesHandler(message):
             msg = bot.send_message(message.from_user.id, "Что хотите редактировать?", reply_markup=markup)
             bot.register_next_step_handler(msg, profileRegHandler)
         elif message.text == 'Друзья и ЧС👥':
-            friends, enemies = get_friends_and_enemies_list(personUname)
+            friends, enemies = get_friends_and_enemies_list(personId)
             friendslist = ''
             enemieslist = ''
             for i in friends.split():
-                data = get_data_from_bd_by_uname(i)
+                data = get_data_from_bd_by_id(i)
                 friendslist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+data[1]+'">['+data[1]+'] '+data[2]+'</a>\n'
             for i in enemies.split():
-                data = get_data_from_bd_by_uname(i)
+                data = get_data_from_bd_by_id(i)
                 enemieslist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+data[1]+'">['+data[1]+'] '+data[2]+'</a>'
             bot.send_message(message.from_user.id, "Друзья:\n"+friendslist, parse_mode="HTML",disable_web_page_preview = True)
             bot.send_message(message.from_user.id, "В черном списке:\n"+enemieslist, parse_mode="HTML",disable_web_page_preview = True, reply_markup=chat_kb())
