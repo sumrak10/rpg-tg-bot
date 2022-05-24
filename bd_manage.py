@@ -563,6 +563,7 @@ def get_raffle_from_bd(code,uid):
                 cursor.executemany(sql, data)
                 conn.commit()
                 conn.close()
+                add_num_to_mon_by_id(uid,fetch_data[1])
                 return 200
     except:
         return 404
