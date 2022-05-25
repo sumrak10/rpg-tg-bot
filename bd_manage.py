@@ -9,22 +9,22 @@ else:
     print("THIS PLATFORM DON'T SUPPORTED (bd_manage.py")
 # (personId,personUname,personName,personAge,personDes,100,0)
 def insert_data_to_bd(id,uname,name,age,des,mon,loc):
-    # try:
-    conn = sqlite3.connect(dbAddress)
-    cursor = conn.cursor()
-    data = [(id,uname,name,age,des,mon,loc,'0','0','0','0','0','0','0')]
-    sql = """INSERT INTO persons
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
-    cursor.executemany(sql, data)
-    data = [(id,uname,'','')]
-    sql = """INSERT INTO relationship
-                VALUES (?,?,?,?)"""
-    cursor.executemany(sql, data)
-    conn.commit()
-    conn.close()
-    return True
-    # except:
-    #     return False
+    try:
+        conn = sqlite3.connect(dbAddress)
+        cursor = conn.cursor()
+        data = [(id,uname,name,age,des,mon,loc,'0','0','0','0','0','0','0')]
+        sql = """INSERT INTO persons
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+        cursor.executemany(sql, data)
+        data = [(id,uname,'','')]
+        sql = """INSERT INTO relationship
+                    VALUES (?,?,?,?)"""
+        cursor.executemany(sql, data)
+        conn.commit()
+        conn.close()
+        return True
+    except:
+        return False
 def get_persons_in_loc_bd(loc):
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
