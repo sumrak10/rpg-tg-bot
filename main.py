@@ -219,7 +219,7 @@ def start(message):
             msg = bot.send_message(message.from_user.id, "Привет! \nЯ вижу ты новенький, бегом создавать персонажа :)", reply_markup=markup)	
             bot.register_next_step_handler(msg, createPerson)
 def createPerson(message):
-    msg = bot.send_message(message.from_user.id, 'Как тебя будут звать? \nИмейте ввиду что длина имени не должна превышать 15 символов и должна содержать только символы английского и русского алфавита.')
+    msg = bot.send_message(message.from_user.id, 'Как тебя будут звать?\nИмейте ввиду что длина имени не должна превышать 15 символов и должна содержать только символы английского и русского алфавита.')
     bot.register_next_step_handler(msg, setPersonName)
 def setPersonName(message):
     global personName
@@ -229,7 +229,7 @@ def setPersonName(message):
         if not(sim in trueSimInName):
             truename = False
     if truename and (len(personName) <= 20):
-        msg = bot.send_message(message.from_user.id, 'Придумай уникальный идентификатор\nОн должен содержать только буквы английского алфавита a-z и цифры 0-9 так же нижние подчеркивания\nДолжен содержать более '+str(minUnameLen)+'х символов и не должен начинаться с цифры\n(можно использовать такой же username как и у твоего телеграм аккаунта)')
+        msg = bot.send_message(message.from_user.id, 'Придумай уникальный идентификатор по которому тебя будут находить другие персонажи.\nОн должен содержать только буквы английского алфавита a-z и цифры 0-9 так же нижние подчеркивания\nДолжен содержать более '+str(minUnameLen)+'х символов и не должен начинаться с цифры\n(можно использовать такой же username как и у твоего телеграм аккаунта)')
         bot.register_next_step_handler(msg, setPersonUname)
     else:
         msg = bot.send_message(message.from_user.id, 'Длина имени не должна превышать 15 символов и должна содержать только символы английского и русского алфавита.')
@@ -741,14 +741,12 @@ def mainMenu(message):
             update_stock_data(stock[1],new_stock_prices,new_stock_dates)
         set_global_var_data_from_bd('last_stock_update',date_to_string(datetime.datetime.now().date()))
     
-    data = get_data_from_bd_by_id(message.from_user.id)
-    if data == 0:
+    
+    global personId,personUname,personName,personAge,personDes,personMon,personLoc
+    if updateGlobalVars(message.from_user.id) == 0:
         bot.send_message(message.from_user.id,'У тебя кажется нет персонажа.\nВведи /start')
     else:
-        global personId,personUname,personName,personAge,personDes,personMon,personLoc
-        updateGlobalVars(message.from_user.id)
-
-        if personLoc != 0:
+        if int(personLoc) != 0:
             personsId = get_persons_in_loc_bd(personLoc)
             for i in range(len(personsId)):
                 if int(personsId[i][0]) == int(personId):
@@ -947,6 +945,11 @@ def locationHandler(message):
     elif message.text == locationlist[2][2]:
         bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(7)+'.jpg','rb'), caption="Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "7")
+        for i in range(len(personsId)):
+            if personsId[i][0] == personId:
+                continue
+            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Школа"</i>', parse_mode="HTML",disable_web_page_preview=True)
+   
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('!помощь','!локации','!меню')
         markup.add('!монетка','!кости')
@@ -1031,7 +1034,7 @@ def messagesHandler(message):
                     try:
                         bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> покинул локацию</i>', parse_mode="HTML",disable_web_page_preview=True)
                     except:
-                        print(str(personsId[i][0])+"bot was blocked by that user 182")
+                        print(str(personsId[i][0])+"ошибка при отправке сообщения пользователю "+str(i[0]))
                 update_loc_bd(message.from_user.id, "0")
                 personLoc = 0
             markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -1290,6 +1293,6 @@ def messagesHandler(message):
                         try:
                             bot.send_message(i[0],'<b>'+'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a></b>: '+message.text, parse_mode="HTML",disable_web_page_preview = True)
                         except:
-                            print(i[0],'не получается отправить сообщение этому пользователю')
+                            print(i[0],'не получается отправить сообщение этому пользователю '+str(i[0]))
         
 # /ЧАТЫ
