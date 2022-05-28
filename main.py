@@ -142,7 +142,7 @@ def viewStock(suname,uid):
         for stock in mstock.split():
             if suname in stock:
                 user_amount = stock.split('-')[1]
-        bot.send_photo(message.from_user.id,open(oslink+'media/img/diagrams/'+sname+'.png','rb'), caption='[<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>] '+sname+'\nПериод '+sdates[0].replace('/','.')+' - '+sdates[-1].replace('/','.')+'\nЦена: '+str(sprice)+RPCoin_emoji+'\nДоступно к покупке: '+str(samount)+'шт.\nУ вас в наличии:'+str(user_amount)+'шт.',reply_markup=stock_buy_sell_kb(suname,user_amount),parse_mode="HTML" )
+        bot.send_photo(uid,open(oslink+'media/img/diagrams/'+sname+'.png','rb'), caption='[<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>] '+sname+'\nПериод '+sdates[0].replace('/','.')+' - '+sdates[-1].replace('/','.')+'\nЦена: '+str(sprice)+RPCoin_emoji+'\nДоступно к покупке: '+str(samount)+'шт.\nУ вас в наличии:'+str(user_amount)+'шт.',reply_markup=stock_buy_sell_kb(suname,user_amount),parse_mode="HTML" )
     else:
         bot.send_message(uid, 'Акции с таким тикетом не было найдено!')
 def isChannelMember(uid):
