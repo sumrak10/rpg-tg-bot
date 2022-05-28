@@ -21,20 +21,10 @@ else:
     print("THIS PLATFORM DON'T SUPPORTED (main.py)")
 
 # ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-personId = ""
-personUname = ""
-personName = ""
-personAge = ""
-personDes = ""
-personMon = ""
-personLoc = ""
-personAvatar = ""
-personHouse = ""
-personCar = ""
-personAdequacy = ""
-personSustime = ""
-personProf = ""
-personsId = []
+regpersonUname = ""
+regpersonName = ""
+regpersonAge = ""
+regregpersonDes = ""
 myfriends = []
 myenemies = []
 trueSimInUname = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_'
@@ -64,7 +54,6 @@ chat_commands = [[[-3],'!меню','Возвращает вас в главно�
 not_available_emoji = '❌'
 RPCoin_emoji = '🪙'
 # локации
-locationlist = []
 clubopen = datetime.time(18, 0)
 clubclose = datetime.time(6, 0)
 schoolopen = datetime.time(8, 0)
@@ -106,24 +95,6 @@ def get_commands_list_text(loc,uid):
         elif -1 in i[0] and loc == uid:
             text += ('<code>'+i[1]+'</code> - '+i[2])+'\n\n'
     return text
-def updateGlobalVars(uid):
-    global personId,personUname,personName,personAge,personDes,personMon,personLoc, personAvatar, personHouse, personCar, personAdequacy, personSustime, personProf
-    data = get_data_from_bd_by_id(uid)
-    if data == 0:
-        return 0
-    personId = data[0]
-    personUname = data[1]
-    personName = data[2]
-    personAge = data[3]
-    personDes = data[4]
-    personMon = data[5]
-    personLoc = data[6]
-    personAvatar = data[7]
-    personHouse = data[8]
-    personCar = data[9]
-    personAdequacy = data[10]
-    personSustime = data[11]
-    personProf = data[12]
 def date_to_string(date):
     return str(date.strftime('%d/%m/%Y'))
 def string_to_date(str):
@@ -171,7 +142,7 @@ def viewStock(suname,uid):
         for stock in mstock.split():
             if suname in stock:
                 user_amount = stock.split('-')[1]
-        bot.send_photo(personId,open(oslink+'media/img/diagrams/'+sname+'.png','rb'), caption='[<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>] '+sname+'\nПериод '+sdates[0].replace('/','.')+' - '+sdates[-1].replace('/','.')+'\nЦена: '+str(sprice)+RPCoin_emoji+'\nДоступно к покупке: '+str(samount)+'шт.\nУ вас в наличии:'+str(user_amount)+'шт.',reply_markup=stock_buy_sell_kb(suname,user_amount),parse_mode="HTML" )
+        bot.send_photo(message.from_user.id,open(oslink+'media/img/diagrams/'+sname+'.png','rb'), caption='[<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>] '+sname+'\nПериод '+sdates[0].replace('/','.')+' - '+sdates[-1].replace('/','.')+'\nЦена: '+str(sprice)+RPCoin_emoji+'\nДоступно к покупке: '+str(samount)+'шт.\nУ вас в наличии:'+str(user_amount)+'шт.',reply_markup=stock_buy_sell_kb(suname,user_amount),parse_mode="HTML" )
     else:
         bot.send_message(uid, 'Акции с таким тикетом не было найдено!')
 def isChannelMember(uid):
@@ -197,18 +168,16 @@ def rafflePrize(rstr,uid):
 # РЕГИСТРАЦИЯ
 @bot.message_handler(commands=['start'])
 def start(message):
-    global personId
-    personId = message.from_user.id
     startdata = message.text[7:]
     if startdata.split('-')[0] == 'viewPerson':
-        bot.delete_message(personId, message.message_id)
-        viewPerson(startdata.split('-')[1], personId)
+        bot.delete_message(message.from_user.id, message.message_id)
+        viewPerson(startdata.split('-')[1], message.from_user.id)
     elif startdata.split('-')[0] == 'viewStock':
-        bot.delete_message(personId, message.message_id)
-        viewStock(startdata.split('-')[1],personId)
+        bot.delete_message(message.from_user.id, message.message_id)
+        viewStock(startdata.split('-')[1],message.from_user.id)
     elif startdata.split('-')[0] == 'raffle':
-        bot.delete_message(personId, message.message_id)
-        rafflePrize(startdata.split('-')[1],personId)
+        bot.delete_message(message.from_user.id, message.message_id)
+        rafflePrize(startdata.split('-')[1],message.from_user.id)
     else:
         personData = get_data_from_bd_by_id(message.from_user.id)
         # bot.reply_to(message, "Привет я кажется тебя помню. \nНапиши /game чтобы начать играть!")
@@ -220,59 +189,59 @@ def start(message):
             bot.register_next_step_handler(msg, createPerson)
 def createPerson(message):
     msg = bot.send_message(message.from_user.id, 'Как тебя будут звать?\nИмейте ввиду что длина имени не должна превышать 15 символов и должна содержать только символы английского и русского алфавита.')
-    bot.register_next_step_handler(msg, setPersonName)
-def setPersonName(message):
-    global personName
-    personName = message.text
+    bot.register_next_step_handler(msg, setregpersonName)
+def setregpersonName(message):
+    global regpersonName
+    regpersonName = message.text
     truename = True
-    for sim in personName:
+    for sim in regpersonName:
         if not(sim in trueSimInName):
             truename = False
-    if truename and (len(personName) <= 20):
+    if truename and (len(regpersonName) <= 20):
         msg = bot.send_message(message.from_user.id, 'Придумай уникальный идентификатор по которому тебя будут находить другие персонажи.\nОн должен содержать только буквы английского алфавита a-z и цифры 0-9 так же нижние подчеркивания\nДолжен содержать более '+str(minUnameLen)+'х символов и не должен начинаться с цифры\n(можно использовать такой же username как и у твоего телеграм аккаунта)')
-        bot.register_next_step_handler(msg, setPersonUname)
+        bot.register_next_step_handler(msg, setregpersonUname)
     else:
         msg = bot.send_message(message.from_user.id, 'Длина имени не должна превышать 15 символов и должна содержать только символы английского и русского алфавита.')
-        bot.register_next_step_handler(msg, setPersonName)
-def setPersonUname(message):
-    global personUname
+        bot.register_next_step_handler(msg, setregpersonName)
+def setregpersonUname(message):
+    global regpersonUname
     unameStatus = True
-    personUname = message.text
-    for sim in personUname:
+    regpersonUname = message.text
+    for sim in regpersonUname:
         if not(sim in trueSimInUname):
             unameStatus = False
-    if unameStatus == False or (personUname[0] in '1234567890'):
+    if unameStatus == False or (regpersonUname[0] in '1234567890'):
         msg = bot.send_message(message.from_user.id, 'Ты используешь недоступные символы, попробуй еще раз :(')
-        bot.register_next_step_handler(msg, setPersonUname)
-    elif len(personUname) <= 3:
+        bot.register_next_step_handler(msg, setregpersonUname)
+    elif len(regpersonUname) <= 3:
         unameStatus = False
         msg = bot.send_message(message.from_user.id, 'Длина username должна быть больше 3х символов, попробуй еще раз :(')
-        bot.register_next_step_handler(msg, setPersonUname)
+        bot.register_next_step_handler(msg, setregpersonUname)
     else:
-        data = get_data_from_bd_by_uname(personUname)
+        data = get_data_from_bd_by_uname(regpersonUname)
         if ( data != 0 ):
             msg = bot.send_message(message.from_user.id, 'Увы, такой username занят, попробуй еще раз :(')
-            bot.register_next_step_handler(msg, setPersonUname)
+            bot.register_next_step_handler(msg, setregpersonUname)
         elif unameStatus:
-            msg = bot.send_message(message.from_user.id, 'А теперь придумаем возраст, '+personName+' :)')
-            bot.register_next_step_handler(msg, setPersonAge)
-def setPersonAge(message):
-    global personAge
+            msg = bot.send_message(message.from_user.id, 'А теперь придумаем возраст, '+regpersonName+' :)')
+            bot.register_next_step_handler(msg, setregpersonAge)
+def setregpersonAge(message):
+    global regpersonAge
     try:
-        personAge = int(message.text)
-        if not(0 <= personAge <= 120):
+        regpersonAge = int(message.text)
+        if not(0 <= regpersonAge <= 120):
             msg = bot.send_message(message.from_user.id, "А если серьезно? :(")
-            bot.register_next_step_handler(msg, setPersonAge)
+            bot.register_next_step_handler(msg, setregpersonAge)
         else:
             msg = bot.send_message(message.from_user.id, "Придумай описание своего персонажа\n (Текст должен быть не более 255 символов. Учти это!)")
             bot.register_next_step_handler(msg, initPerson)
     except:
         msg = bot.send_message(message.from_user.id, "Мне нужны только цифры (без лишних слов и букв) :(")
-        bot.register_next_step_handler(msg, setPersonAge)
+        bot.register_next_step_handler(msg, setregpersonAge)
 def initPerson(message):
-    global personDes
-    personDes = message.text
-    if (insert_data_to_bd(personId,personUname,personName,personAge,personDes,100,0)):
+    global regregpersonDes
+    regregpersonDes = message.text
+    if (insert_data_to_bd(message.from_user.id,regpersonUname,regpersonName,regpersonAge,regregpersonDes,100,0)):
         bot.send_message(message.from_user.id, "Отлично, персонаж создан! \n\nПодписывайся на <a href='t.me/SmrkRP'>канал</a> чтобы на прямую участвовать в развитии проекта, узнавать о грядущих обновлениях.  \n\n А еще там проводятся розыгрыши :*", parse_mode="HTML", disable_web_page_preview=True)
         mainMenu(message)
     else:
@@ -703,14 +672,14 @@ def callbackHandler(call):
             reports_data = get_reports_from_bd()
             report_data = []
             for report in reports_data:
-                if str(personId) in report[6]:
+                if str(message.from_user.id) in report[6]:
                     continue
                 else:
                     report_data = report
             if report_data == []:
-                bot.send_message(personId, 'Все жалобы проверены, новых нет.')
+                bot.send_message(message.from_user.id, 'Все жалобы проверены, новых нет.')
             else:
-                bot.send_message(personId, 'Описание жалобы:\n' + report_data[3] + '\nТекст жалобы:\n' + report_data[4], reply_markup=policeWork_kb(report_data[0]))
+                bot.send_message(message.from_user.id, 'Описание жалобы:\n' + report_data[3] + '\nТекст жалобы:\n' + report_data[4], reply_markup=policeWork_kb(report_data[0]))
 
 
 @bot.pre_checkout_query_handler(func=lambda query: True)
@@ -740,23 +709,21 @@ def mainMenu(message):
             clean_company_budget(stock[0])
             update_stock_data(stock[1],new_stock_prices,new_stock_dates)
         set_global_var_data_from_bd('last_stock_update',date_to_string(datetime.datetime.now().date()))
-    
-    
-    global personId,personUname,personName,personAge,personDes,personMon,personLoc
-    if updateGlobalVars(message.from_user.id) == 0:
+    pdata = get_data_from_bd_by_id(message.from_user.id)
+    ploc = pdata[6]
+    if pdata == 0:
         bot.send_message(message.from_user.id,'У тебя кажется нет персонажа.\nВведи /start')
     else:
-        if int(personLoc) != 0:
-            personsId = get_persons_in_loc_bd(personLoc)
+        if int(ploc) != 0:
+            personsId = get_persons_in_loc_bd(ploc)
             for i in range(len(personsId)):
-                if int(personsId[i][0]) == int(personId):
+                if int(personsId[i][0]) == int(message.from_user.id):
                     continue
                 try:
-                    bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> покинул локацию</i>', parse_mode="HTML",disable_web_page_preview=True)
+                    bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+pdata[1]+'">'+pdata[2]+'</a> покинул локацию</i>', parse_mode="HTML",disable_web_page_preview=True)
                 except:
                     print(str(personsId[i][0])+"bot was blocked by that user 182")
             update_loc_bd(message.from_user.id, "0")
-            personLoc = 0
         bot.send_message(message.from_user.id, "Главное меню:", reply_markup=mainMenu_kb())
 
 # /ИГРА
@@ -880,9 +847,10 @@ def changeDes(message):
 # /ПРОФИЛЬ
 
 # ЛОКАЦИИ
-def locationHandler(message):
-    global personId,personsId,personUname,personName,personAge,personDes,personMon,personLoc, locationlist,myfriends,myenemies
-    updateGlobalVars(message.from_user.id)
+def locationHandler(message, locationlist):
+    pdata = get_data_from_bd_by_id(message.from_user.id)
+    puname = pdata[1]
+    pname = pdata[2]
     if message.text == locationlist[0][2]:
         mainMenu(message)
     elif message.text[len(message.text)-1:] == not_available_emoji:
@@ -891,12 +859,11 @@ def locationHandler(message):
     elif message.text == locationlist[0][0]:
         bot.send_message(message.from_user.id, "Локация: "+locationlist[0][0]+"\n", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, message.from_user.id)
-        personLoc = message.from_user.id
         personsId = get_persons_in_loc_bd(message.from_user.id)
         for i in range(len(personsId)):
-            if personsId[i][0] == personId:
+            if personsId[i][0] == message.from_user.id:
                 continue
-            bot.send_message(personsId[i][0],'<u>'+personName+" пришел домой</u>", parse_mode="HTML")
+            bot.send_message(personsId[i][0],'<u>'+pname+" пришел домой</u>", parse_mode="HTML")
     elif message.text == locationlist[0][1]:
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('!меню')
@@ -907,48 +874,48 @@ def locationHandler(message):
         update_loc_bd(message.from_user.id, "2")
         personsId = get_persons_in_loc_bd(2)
         for i in range(len(personsId)):
-            if personsId[i][0] == personId:
+            if personsId[i][0] == message.from_user.id:
                 continue
-            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Улица"</i>', parse_mode="HTML",disable_web_page_preview=True)
+            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Улица"</i>', parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[1][1]:
         bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(3)+'.jpg','rb'), caption="Локация: Парк\nДовольно спокойное место, в самый раз чтобы отдохнуть от городской суеты", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "3")
         personsId = get_persons_in_loc_bd(3)
         for i in range(len(personsId)):
-            if personsId[i][0] == personId:
+            if personsId[i][0] == message.from_user.id:
                 continue
-            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Парк" </i>',parse_mode="HTML",disable_web_page_preview=True)
+            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Парк" </i>',parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[1][2]:
         bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(4)+'.jpg','rb'), caption="Локация: Кафе\nНебольшое кафе находящееся недалеко от вашего дома. Ни чем не приметная, но такая уютная", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "4")
         personsId = get_persons_in_loc_bd(4)
         for i in range(len(personsId)):
-            if personsId[i][0] == personId:
+            if personsId[i][0] == message.from_user.id:
                 continue
-            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Кафе"</i>', parse_mode="HTML",disable_web_page_preview=True)
+            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Кафе"</i>', parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[2][1]:
         bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(5)+'.jpg','rb'), caption="Локация: Клуб\nС самого входа слышно музыку которая так и тянет танцевать!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "5")
         personsId = get_persons_in_loc_bd(5)
         for i in range(len(personsId)):
-            if personsId[i][0] == personId:
+            if personsId[i][0] == message.from_user.id:
                 continue
-            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Клуб"</i>', parse_mode="HTML",disable_web_page_preview=True)
+            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Клуб"</i>', parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[2][0]:
         bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(6)+'.jpg','rb'), caption="Локация: Школа\nЗнания - сила!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "6")
         personsId = get_persons_in_loc_bd(6)
         for i in range(len(personsId)):
-            if personsId[i][0] == personId:
+            if personsId[i][0] == message.from_user.id:
                 continue
-            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Школа"</i>', parse_mode="HTML",disable_web_page_preview=True)
+            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Школа"</i>', parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[2][2]:
         bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(7)+'.jpg','rb'), caption="Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "7")
         for i in range(len(personsId)):
-            if personsId[i][0] == personId:
+            if personsId[i][0] == message.from_user.id:
                 continue
-            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> вошел в локацию "Школа"</i>', parse_mode="HTML",disable_web_page_preview=True)
+            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Школа"</i>', parse_mode="HTML",disable_web_page_preview=True)
    
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('!помощь','!локации','!меню')
@@ -962,9 +929,8 @@ def locationHandler(message):
         bot.register_next_step_handler(msg, locationHandler)
 
 def visitsHandler(message):
-    global personId,personsId,personUname,personName,personAge,personDes,personMon,personLoc, locationlist,myfriends,myenemies
-    updateGlobalVars(message.from_user.id)
-    if personUname == message.text:
+    pdata = get_data_from_bd_by_id(message.from_user.id)
+    if pdata[1] == message.text:
         bot.send_message(message.from_user.id, 'Домой вы можете попасть с помощью пункта меню "Дом" в меню локаций')
         mainMenu(message)
     elif message.text == '!меню':
@@ -976,12 +942,12 @@ def visitsHandler(message):
         except:
             bot.send_message(message.from_user.id, "Такого персонажа нет в нашей базе данных, проверьте корректность введеного username")
             mainMenu(message)
-        print(personId,personUname,message.text,friends)
-        if not(personUname in enemies):
-            if str(personId) in friends:
+        print(message.from_user.id,pdata[1],message.text,friends)
+        if not(pdata[1] in enemies):
+            if str(message.from_user.id) in friends:
                 update_loc_bd(message.from_user.id, data[0])
                 bot.send_message(message.from_user.id, "Локация: Дом пользователя "+data[2],reply_markup=chat_kb())
-                bot.send_message(data[0], 'Персонаж ['+personUname+'] '+personName+' пришел к вам домой',reply_markup=chat_kb())
+                bot.send_message(data[0], 'Персонаж ['+pdata[1]+'] '+pdata[2]+' пришел к вам домой',reply_markup=chat_kb())
             else:
                 bot.send_message(message.from_user.id, "Вас нет в друзьях у данного персонажа")
                 mainMenu(message)
@@ -996,8 +962,14 @@ def visitsHandler(message):
 
 @bot.message_handler(content_types=['text'])
 def messagesHandler(message):
-    global personId,personsId,personUname,personName,personAge,personDes,personMon,personLoc, locationlist,myfriends,myenemies
-    if updateGlobalVars(message.from_user.id):
+    pdata = get_data_from_bd_by_id(message.from_user.id)
+    puname = pdata[1]
+    pname = pdata[2]
+    page = pdata[3]
+    pdes = pdata[4]
+    pmon = pdata[5]
+    ploc = pdata[6]
+    if pdata == 0:
         bot.send_message(message.from_user.id,'У тебя кажется нет персонажа.\nВведи /start')
     else:
         if message.text == 'Меню↩️':
@@ -1008,7 +980,7 @@ def messagesHandler(message):
             msg = bot.send_message(message.from_user.id, "Что хотите редактировать?", reply_markup=markup)
             bot.register_next_step_handler(msg, profileRegHandler)
         elif message.text == 'Друзья и ЧС👥':
-            friends, enemies = get_friends_and_enemies_list(personId)
+            friends, enemies = get_friends_and_enemies_list(message.from_user.id)
             friendslist = ''
             enemieslist = ''
             for i in friends.split():
@@ -1023,28 +995,26 @@ def messagesHandler(message):
             markup = ReplyKeyboardMarkup(resize_keyboard=True)
             markup.add('Друзья и ЧС👥', 'Меню↩️')
             markup.add('Редактировать профиль⚙️')
-            bot.send_message(message.from_user.id, "\nUsername: <code>"+personUname+"</code>\nИмя: "+personName+"\nВозраст: "+str(personAge)+"\nБаланс: "+str(personMon)+RPCoin_emoji+"\nОписание: "+personDes, parse_mode="HTML",reply_markup=markup)
+            bot.send_message(message.from_user.id, "\nUsername: <code>"+puname+"</code>\nИмя: "+pname+"\nВозраст: "+str(regpersonAge)+"\nБаланс: "+str(pmon)+RPCoin_emoji+"\nОписание: "+pdes, parse_mode="HTML",reply_markup=markup)
         elif message.text == 'Локации📍' or message.text.lower() == '!локации':
-            updateGlobalVars(message.from_user.id)
-            if personLoc != 0:
-                personsId = get_persons_in_loc_bd(personLoc)
+            if ploc != 0:
+                personsId = get_persons_in_loc_bd(ploc)
                 for i in range(len(personsId)):
-                    if int(personsId[i][0]) == int(personId):
+                    if int(personsId[i][0]) == int(message.from_user.id):
                         continue
                     try:
-                        bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> покинул локацию</i>', parse_mode="HTML",disable_web_page_preview=True)
+                        bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> покинул локацию</i>', parse_mode="HTML",disable_web_page_preview=True)
                     except:
                         print(str(personsId[i][0])+"ошибка при отправке сообщения пользователю "+str(i[0]))
                 update_loc_bd(message.from_user.id, "0")
-                personLoc = 0
             markup = ReplyKeyboardMarkup(resize_keyboard=True)
             time_now = datetime.datetime.now().time()
             locationlist = [['Дом🏠', 'В гости🏘','Меню↩️'],['Улица🚙', 'Парк🏞', 'Кафе☕️'],['Школа✍️','Клуб🌃','Казино💸']] #,['Автосалон🏎']
-            if not((6 < int(personAge) <= 18) and ((schoolopen<=time_now) and (schoolclose>time_now))):
+            if not((6 < int(page) <= 18) and ((schoolopen<=time_now) and (schoolclose>time_now))):
                 locationlist[2][0] = locationlist[2][0][0:len(locationlist[2][0])-2] + not_available_emoji
-            if ((18 <= int(personAge)) and ((clubopen<=time_now) and (clubclose>=time_now))):
+            if ((18 <= int(page)) and ((clubopen<=time_now) and (clubclose>=time_now))):
                 locationlist[2][1] = locationlist[2][1][0:len(locationlist[2][1])-1] + not_available_emoji
-            if not(18 <= int(personAge)):
+            if not(18 <= int(page)):
                 locationlist[2][2] = locationlist[2][2][0:len(locationlist[2][2])-1] + not_available_emoji
             for i in range(len(locationlist)):
                 if len(locationlist[i]) == 3:
@@ -1054,34 +1024,34 @@ def messagesHandler(message):
                 if len(locationlist[i]) == 1:
                     markup.add(locationlist[i][0])
             msg = bot.send_message(message.from_user.id, "Выберите локацию", reply_markup=markup)
-            bot.register_next_step_handler(msg, locationHandler)
+            bot.register_next_step_handler(msg, locationHandler, locationlist)
         elif message.text == 'Панель заработка🧮':
             date_now = datetime.datetime.now().date()
             date = date_now - datetime.timedelta(1)
             try:
-                mdata = get_data_from_management(personId)
+                mdata = get_data_from_management(message.from_user.id)
             except:
                 businessStr = ''
                 for i in businessList:
                     businessStr += str(i[1])+'-0 '
-                insert_new_person_in_management(personId,date_to_string(date), businessStr)
-            mdata = get_data_from_management(personId)
-            data = get_data_from_bd_by_id(personId)
+                insert_new_person_in_management(message.from_user.id,date_to_string(date), businessStr)
+            mdata = get_data_from_management(message.from_user.id)
+            data = get_data_from_bd_by_id(message.from_user.id)
             datedelta = date_now - string_to_date(mdata[1])
             datedeltafinc = date_now - string_to_date(mdata[3])
             income_money = int(datedeltafinc.days) * int(mdata[2])
             if datedelta.days >= 1:
-                bot.send_message(personId,'Вам доступен ежедневный приз размером в 25'+RPCoin_emoji, reply_markup=everydayPrize_kb())
-            bot.send_message(personId, 'Выберите тип заработка:', reply_markup=moneyControlPanel_kb())
+                bot.send_message(message.from_user.id,'Вам доступен ежедневный приз размером в 25'+RPCoin_emoji, reply_markup=everydayPrize_kb())
+            bot.send_message(message.from_user.id, 'Выберите тип заработка:', reply_markup=moneyControlPanel_kb())
         elif message.text == 'Бизнес💼':
             date_now = datetime.datetime.now().date()
             date = date_now - datetime.timedelta(1)
-            mdata = get_data_from_management(personId)
-            data = get_data_from_bd_by_id(personId)
+            mdata = get_data_from_management(message.from_user.id)
+            data = get_data_from_bd_by_id(message.from_user.id)
             datedelta = date_now - string_to_date(mdata[1])
             datedeltafinc = date_now - string_to_date(mdata[3])
             income_money = int(datedeltafinc.days) * int(mdata[2])
-            bot.send_message(personId,'Баланс: '+str(data[5])+RPCoin_emoji+'\nДенег нокопилось: '+str(income_money)+RPCoin_emoji+'\nПассивный ежедневный доход: '+str(mdata[2])+RPCoin_emoji,reply_markup=management_kb())
+            bot.send_message(message.from_user.id,'Баланс: '+str(data[5])+RPCoin_emoji+'\nДенег нокопилось: '+str(income_money)+RPCoin_emoji+'\nПассивный ежедневный доход: '+str(mdata[2])+RPCoin_emoji,reply_markup=management_kb())
         elif message.text == 'Акции📈':
             stock_data = get_stock_data()
             text = ''
@@ -1096,22 +1066,22 @@ def messagesHandler(message):
                 if sprice == 0:
                     sprice = 1
                 text += '[<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>] '+sname+' - '+str(sprice)+RPCoin_emoji+'\n Доступно: '+str(samount)+'шт.\n\n'
-            bot.send_message(personId,'Последнее обновление: '+sdates[-1].replace('/','.')+'\n\n'+text, parse_mode="HTML", disable_web_page_preview=True)
+            bot.send_message(message.from_user.id,'Последнее обновление: '+sdates[-1].replace('/','.')+'\n\n'+text, parse_mode="HTML", disable_web_page_preview=True)
         elif message.text == 'Работа💳':
             if personProf == '0':
-                bot.send_message(personId, 'У тебя нет работы!')
+                bot.send_message(message.from_user.id, 'У тебя нет работы!')
             elif personProf == 'Полиция':
                 reports_data = get_reports_from_bd()
                 report_data = []
                 for report in reports_data:
-                    if str(personId) in report[6]:
+                    if str(message.from_user.id) in report[6]:
                         continue
                     else:
                         report_data = report
                 if report_data == []:
-                    bot.send_message(personId, 'Все жалобы проверены, новых нет.')
+                    bot.send_message(message.from_user.id, 'Все жалобы проверены, новых нет.')
                 else:
-                    bot.send_message(personId, 'Описание жалобы:\n' + report_data[3] + '\nТекст жалобы:\n' + report_data[4], reply_markup=policeWork_kb(report_data[0]))
+                    bot.send_message(message.from_user.id, 'Описание жалобы:\n' + report_data[3] + '\nТекст жалобы:\n' + report_data[4], reply_markup=policeWork_kb(report_data[0]))
             # elif personProf == 'Суд':
 # ЧАТЫ
         elif message.text[0] == '!':
@@ -1119,13 +1089,13 @@ def messagesHandler(message):
             if message.text.lower() == chat_commands[0][1]: # !меню
                 mainMenu(message)
             elif splitMessage[0].lower() == '!разыграть':
-                if personId in config.moders:
+                if message.from_user.id in config.moders:
                     price = int(splitMessage[1])
                     amount = int(splitMessage[2])
                     rstr = ''
                     for i in range(20):
                         rstr += trueSimInUname[random.randint(0,len(trueSimInUname)-1)]
-                    bot.send_message(personId,'Розыгрыш\nСумма: '+str(price)+RPCoin_emoji+'\nКоличество мест: '+str(amount)+'\nСсылка: '+'http://t.me/SmrkRP_bot?start=raffle-'+str(rstr))
+                    bot.send_message(message.from_user.id,'Розыгрыш\nСумма: '+str(price)+RPCoin_emoji+'\nКоличество мест: '+str(amount)+'\nСсылка: '+'http://t.me/SmrkRP_bot?start=raffle-'+str(rstr))
                     insert_raffle_in_bd(rstr,price,amount)
             elif splitMessage[0].lower() == chat_commands[12][1]: # !жалоба
                 report_id1 = message.from_user.id
@@ -1158,140 +1128,140 @@ def messagesHandler(message):
                 except:
                     i = False
                 if (len(splitMessage) <= 2) or (i == False):
-                    bot.send_message(personId,'Не корректно введена команда. Посмотрите подробнее с помощью команды <code>!помощь</code>', parse_mode="HTML")
+                    bot.send_message(message.from_user.id,'Не корректно введена команда. Посмотрите подробнее с помощью команды <code>!помощь</code>', parse_mode="HTML")
                 else:
                     if int(splitMessage[2]) <= 0:
-                        bot.send_message(personId,'Введите корректную сумму')
+                        bot.send_message(message.from_user.id,'Введите корректную сумму')
                     else:
-                        if splitMessage[1] == personUname:
-                            bot.send_message(personId,'Самому себе деньги переводить нет смысла!')
+                        if splitMessage[1] == puname:
+                            bot.send_message(message.from_user.id,'Самому себе деньги переводить нет смысла!')
                         else:
                             clientdata = get_data_from_bd_by_uname(splitMessage[1])
                             if clientdata != 0:
                                 if int(personMon)-int(splitMessage[2])>0:
                                     update_mon_bd(splitMessage[1], int(clientdata[5])+int(splitMessage[2]))
-                                    update_mon_bd(personUname, int(personMon)-int(splitMessage[2]))
-                                    bot.send_message(personId,'<i>Вы перевели деньги персонажу <a href="t.me/SmrkRP_bot?start=viewPerson-'+clientdata[1]+'">'+clientdata[2]+'</a> на сумму '+splitMessage[2]+RPCoin_emoji+'</i>',parse_mode="HTML",disable_web_page_preview=True)
-                                    bot.send_message(get_id_by_uname(splitMessage[1]),'<i>Персонаж <a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> перевел вам '+splitMessage[2]+RPCoin_emoji+'</i>',parse_mode="HTML",disable_web_page_preview=True)
+                                    update_mon_bd(puname, int(personMon)-int(splitMessage[2]))
+                                    bot.send_message(message.from_user.id,'<i>Вы перевели деньги персонажу <a href="t.me/SmrkRP_bot?start=viewPerson-'+clientdata[1]+'">'+clientdata[2]+'</a> на сумму '+splitMessage[2]+RPCoin_emoji+'</i>',parse_mode="HTML",disable_web_page_preview=True)
+                                    bot.send_message(get_id_by_uname(splitMessage[1]),'<i>Персонаж <a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> перевел вам '+splitMessage[2]+RPCoin_emoji+'</i>',parse_mode="HTML",disable_web_page_preview=True)
                                 else:
-                                    bot.send_message(personId,'Не хватает денег')
+                                    bot.send_message(message.from_user.id,'Не хватает денег')
                             else:
-                                bot.send_message(personId,'Персонажа с таким username нет в базе данных! Проверьте корректность введеных данных')
+                                bot.send_message(message.from_user.id,'Персонажа с таким username нет в базе данных! Проверьте корректность введеных данных')
             elif message.text.lower() == chat_commands[1][1]: # !баланс
-                bot.send_message(personId,'Ваш баланс: '+str(personMon)+RPCoin_emoji)
+                bot.send_message(message.from_user.id,'Ваш баланс: '+str(personMon)+RPCoin_emoji)
             elif message.text.lower() == chat_commands[5][1]: # !ктоздесь
-                if personLoc != 0:
-                    personsId = get_persons_in_loc_bd(personLoc)
+                if ploc != 0:
+                    personsId = get_persons_in_loc_bd(ploc)
                     personlist = ''
                     for i in personsId:
                         personlist += '<a href="t.me/SmrkRP_bot?start=viewPerson-'+i[1]+'">'+i[2]+'</a>\n'
-                    bot.send_message(personId,'В локации находятся: \n'+personlist, parse_mode="HTML",disable_web_page_preview = True)
+                    bot.send_message(message.from_user.id,'В локации находятся: \n'+personlist, parse_mode="HTML",disable_web_page_preview = True)
             elif message.text.lower() == '!время': # !время
                 time_now = datetime.datetime.now().time()
-                bot.send_message(personId,'Время: '+time_now.strftime('%H:%M'))
+                bot.send_message(message.from_user.id,'Время: '+time_now.strftime('%H:%M'))
             elif splitMessage[0].lower() == chat_commands[6][1]: # !магазин
                 # prices = [LabeledPrice(label='Машина S класса', amount=10000), LabeledPrice('Налог на роскошь', 500)]
-                # bot.send_invoice(personId,'Машина S класса','Самая крутая тачка что есть на рынке','Это нужно для внутренних процессов',config.provider_token,'RUB',prices=prices)
-                bot.send_message(personId, 'Еще закрыт! Заходите к нам позже')
+                # bot.send_invoice(message.from_user.id,'Машина S класса','Самая крутая тачка что есть на рынке','Это нужно для внутренних процессов',config.provider_token,'RUB',prices=prices)
+                bot.send_message(message.from_user.id, 'Еще закрыт! Заходите к нам позже')
             elif splitMessage[0].lower() == chat_commands[2][1]: # !профиль
                 if len(splitMessage) < 2:
-                    bot.send_message(personId,'Не корректно введена команда. Посмотрите подробнее с помощью команды <code>!помощь</code>', parse_mode="HTML")
+                    bot.send_message(message.from_user.id,'Не корректно введена команда. Посмотрите подробнее с помощью команды <code>!помощь</code>', parse_mode="HTML")
                 else:
-                    viewPerson(splitMessage[1],personId)
+                    viewPerson(splitMessage[1],message.from_user.id)
 
-            elif (splitMessage[0].lower() ==  chat_commands[8][1]) and (personLoc == personId): # !сад
+            elif (splitMessage[0].lower() ==  chat_commands[8][1]) and (ploc == message.from_user.id): # !сад
                 try: 
-                    gdata = get_data_from_gardening(personId)
+                    gdata = get_data_from_gardening(message.from_user.id)
                 except:
-                    insert_new_person_in_gardening(personId,'0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 ', date_to_string(datetime.datetime.now().date()))
-                    gdata = get_data_from_gardening(personId)
+                    insert_new_person_in_gardening(message.from_user.id,'0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 ', date_to_string(datetime.datetime.now().date()))
+                    gdata = get_data_from_gardening(message.from_user.id)
                 last_watering =  datetime.datetime.now().date() - string_to_date(gdata[2])
                 if int(last_watering.days) > 1:
-                    update_garden(personId,'0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 ')
-                    gdata = get_data_from_gardening(personId)
-                    bot.send_message(personId,'Вы не поливали сад более 1 дня поэтому весь урожай высох!',reply_markup=garden_kb(gdata[1]))
+                    update_garden(message.from_user.id,'0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 ')
+                    gdata = get_data_from_gardening(message.from_user.id)
+                    bot.send_message(message.from_user.id,'Вы не поливали сад более 1 дня поэтому весь урожай высох!',reply_markup=garden_kb(gdata[1]))
                 else:
-                    bot.send_message(personId,'Последний полив: '+gdata[2],reply_markup=garden_kb(gdata[1]))
+                    bot.send_message(message.from_user.id,'Последний полив: '+gdata[2],reply_markup=garden_kb(gdata[1]))
 
             elif message.text.lower() == chat_commands[3][1]: # !помощь
-                text = get_commands_list_text(personLoc,personId)
-                bot.send_message(personId,text,parse_mode="HTML")
+                text = get_commands_list_text(ploc,message.from_user.id)
+                bot.send_message(message.from_user.id,text,parse_mode="HTML")
             elif splitMessage[0].lower() == chat_commands[4][1]: # !сообщение
                 if len(splitMessage) > 1:
                     uname = splitMessage[1]
-                    if uname != personUname:
+                    if uname != puname:
                         pdata = get_data_from_bd_by_uname(uname)
                         if pdata != 0:
                             friends, enemies = get_friends_and_enemies_list(pdata[0])
-                            if not(str(personId) in enemies):
+                            if not(str(message.from_user.id) in enemies):
                                 message = ''
                                 for i in range(len(splitMessage)-2):
                                     message += str(splitMessage[int(i)+2]) + ' '
-                                bot.send_message(pdata[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a>(cообщение): '+message,parse_mode="HTML", disable_web_page_preview=True)
-                                bot.send_message(personId, 'Сообщение доставлено!')
+                                bot.send_message(pdata[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a>(cообщение): '+message,parse_mode="HTML", disable_web_page_preview=True)
+                                bot.send_message(message.from_user.id, 'Сообщение доставлено!')
                                 for i in personsId:
-                                    if str(i[0]) == str(personId) or str(i[0]) == str(get_id_by_uname(uname)):
+                                    if str(i[0]) == str(message.from_user.id) or str(i[0]) == str(get_id_by_uname(uname)):
                                         continue
-                                    bot.send(i[0],'<i><a href="SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a> что-то делает в телефоне </i>',parse_mode="HTML",disable_web_preview=True)
+                                    bot.send(i[0],'<i><a href="SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> что-то делает в телефоне </i>',parse_mode="HTML",disable_web_preview=True)
                             else:
-                                bot.send_message(personId, 'Вы в черном списке у данного персонажа')
+                                bot.send_message(message.from_user.id, 'Вы в черном списке у данного персонажа')
                         else:
-                            bot.send_message(personId, 'Сообщение не доставлено! Проверьте корректность введеного username')
+                            bot.send_message(message.from_user.id, 'Сообщение не доставлено! Проверьте корректность введеного username')
                     else:
-                        bot.send_message(personId, 'Ошибка, вы ввели свой же username!')
+                        bot.send_message(message.from_user.id, 'Ошибка, вы ввели свой же username!')
                         
             elif splitMessage[0].lower() == chat_commands[7][1]: # !шепот
-                if len(splitMessage) > 1 and personLoc != 0:
+                if len(splitMessage) > 1 and ploc != 0:
                     uname = splitMessage[1]
                     if personsId == []:
-                        personsId = get_persons_in_loc_bd(personLoc)
-                    if uname != personUname:
+                        personsId = get_persons_in_loc_bd(ploc)
+                    if uname != puname:
                         pdata = get_data_from_bd_by_uname(uname)
                         if pdata != 0:
                             friends, enemies = get_friends_and_enemies_list(pdata[0])
-                            if not(str(personId) in enemies):
-                                if int(pdata[6]) == int(personLoc):
+                            if not(str(message.from_user.id) in enemies):
+                                if int(pdata[6]) == int(ploc):
                                     message = ''
                                     for i in range(len(splitMessage)-2):
                                         message += str(splitMessage[int(i)+2]) + ' '
-                                    bot.send_message(pdata[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a>(шепчет): '+message,parse_mode="HTML", disable_web_page_preview=True)
+                                    bot.send_message(pdata[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a>(шепчет): '+message,parse_mode="HTML", disable_web_page_preview=True)
                                     for i in personsId:
-                                        if str(i[0]) == str(personId) or str(i[0]) == str(get_id_by_uname(uname)):
+                                        if str(i[0]) == str(message.from_user.id) or str(i[0]) == str(get_id_by_uname(uname)):
                                             continue
-                                        bot.send(i[0],'[<a href="SmrkRP_bot?start=viewPerson-'+personUname+'">'+personUname+'</a>]<i> шепчет что-то персонажу </i>[/SmrkRP_bot?start=viewPerson-'+uname+'">'+uname+'</a>]',parse_mode="HTML",disable_web_preview=True)
+                                        bot.send(i[0],'[<a href="SmrkRP_bot?start=viewPerson-'+puname+'">'+puname+'</a>]<i> шепчет что-то персонажу </i>[/SmrkRP_bot?start=viewPerson-'+uname+'">'+uname+'</a>]',parse_mode="HTML",disable_web_preview=True)
                                 else:
-                                    bot.send_message(personId, 'Вы не рядом с этим персонажем')
+                                    bot.send_message(message.from_user.id, 'Вы не рядом с этим персонажем')
                             else:
-                                bot.send_message(personId, 'Вы в черном списке у данного персонажа')
+                                bot.send_message(message.from_user.id, 'Вы в черном списке у данного персонажа')
                         else:
-                            bot.send_message(personId, 'Ошибка! Проверьте корректность введеного username')
+                            bot.send_message(message.from_user.id, 'Ошибка! Проверьте корректность введеного username')
                     else:
-                        bot.send_message(personId, 'Ошибка, вы ввели свой же username!')
+                        bot.send_message(message.from_user.id, 'Ошибка, вы ввели свой же username!')
 # казино
             elif message.text.lower() ==  chat_commands[9][1]: # !монетка
-                if personLoc == 7:
+                if ploc == 7:
                     bot.send_message(message.from_user.id, "Выбери ставку", reply_markup=casinoMonetkaBet_kb())
             elif message.text.lower() ==  chat_commands[10][1]: # !кости
-                if personLoc == 7:
+                if ploc == 7:
                     bot.send_message(message.from_user.id, "Выбери ставку", reply_markup=casinoKostiBet_kb())
-        elif int(personLoc) != 0:
+        elif int(ploc) != 0:
             updateGlobalVars(message.from_user.id)
             if personsId == []:
-                personsId = get_persons_in_loc_bd(personLoc)
-            myfriends, myenemies = get_friends_and_enemies_list(personUname)
-            add_one_in_company_budget(personLoc)
+                personsId = get_persons_in_loc_bd(ploc)
+            myfriends, myenemies = get_friends_and_enemies_list(puname)
+            add_one_in_company_budget(ploc)
             for i in personsId:
                 urfriends, urenemies = get_friends_and_enemies_list(i[1])
-                if i[0] == personId:
+                if i[0] == message.from_user.id:
                     continue
-                if  personUname in urenemies:
-                    bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
+                if  puname in urenemies:
+                    bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
                 else:
                     if not(i[1] in myenemies):
-                    #     bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start='+personUname+'"> Вы не видите данное сообщение потому что '+personName+' добавил вас в ЧС</a>', parse_mode="HTML",disable_web_page_preview = True)
+                    #     bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start='+puname+'"> Вы не видите данное сообщение потому что '+pname+' добавил вас в ЧС</a>', parse_mode="HTML",disable_web_page_preview = True)
                     # else:
                         try:
-                            bot.send_message(i[0],'<b>'+'<a href="t.me/SmrkRP_bot?start=viewPerson-'+personUname+'">'+personName+'</a></b>: '+message.text, parse_mode="HTML",disable_web_page_preview = True)
+                            bot.send_message(i[0],'<b>'+'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a></b>: '+message.text, parse_mode="HTML",disable_web_page_preview = True)
                         except:
                             print(i[0],'не получается отправить сообщение этому пользователю '+str(i[0]))
         

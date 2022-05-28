@@ -33,7 +33,7 @@ def generate_diagram_picture(nums, picturename):
         step = round(nmin / 10)
         nmin -= (nmin)
         nmax += (nmax)
-
+        
     pmin = h
     pmax = 0
     for i in range(nmin,nmax+1,step):
