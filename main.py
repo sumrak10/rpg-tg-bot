@@ -915,8 +915,7 @@ def locationHandler(message, locationlist):
         for i in range(len(personsId)):
             if personsId[i][0] == message.from_user.id:
                 continue
-            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Школа"</i>', parse_mode="HTML",disable_web_page_preview=True)
-   
+            bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Казино"</i>', parse_mode="HTML",disable_web_page_preview=True)
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('!помощь','!локации','!меню')
         markup.add('!монетка','!кости')
