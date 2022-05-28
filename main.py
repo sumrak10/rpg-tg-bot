@@ -1245,9 +1245,7 @@ def messagesHandler(message):
                 if ploc == 7:
                     bot.send_message(message.from_user.id, "Выбери ставку", reply_markup=casinoKostiBet_kb())
         elif int(ploc) != 0:
-            updateGlobalVars(message.from_user.id)
-            if personsId == []:
-                personsId = get_persons_in_loc_bd(ploc)
+            personsId = get_persons_in_loc_bd(ploc)
             myfriends, myenemies = get_friends_and_enemies_list(puname)
             add_one_in_company_budget(ploc)
             for i in personsId:
