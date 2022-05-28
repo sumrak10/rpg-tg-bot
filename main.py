@@ -912,7 +912,7 @@ def locationHandler(message, locationlist):
     elif message.text == locationlist[2][2]:
         bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(7)+'.jpg','rb'), caption="Локация: Казино\nУмей во время остановиться!", reply_markup=chat_kb())
         update_loc_bd(message.from_user.id, "7")
-        personsId = get_persons_in_loc_bd(6)
+        personsId = get_persons_in_loc_bd(7)
         for i in range(len(personsId)):
             if personsId[i][0] == message.from_user.id:
                 continue
