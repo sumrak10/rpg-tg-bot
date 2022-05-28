@@ -962,15 +962,15 @@ def visitsHandler(message):
 @bot.message_handler(content_types=['text'])
 def messagesHandler(message):
     pdata = get_data_from_bd_by_id(message.from_user.id)
-    puname = pdata[1]
-    pname = pdata[2]
-    page = pdata[3]
-    pdes = pdata[4]
-    pmon = pdata[5]
-    ploc = pdata[6]
     if pdata == 0:
         bot.send_message(message.from_user.id,'У тебя кажется нет персонажа.\nВведи /start')
     else:
+        puname = pdata[1]
+        pname = pdata[2]
+        page = pdata[3]
+        pdes = pdata[4]
+        pmon = pdata[5]
+        ploc = pdata[6]
         if message.text == 'Меню↩️':
             mainMenu(message)
         elif message.text == 'Редактировать профиль⚙️':
@@ -994,7 +994,7 @@ def messagesHandler(message):
             markup = ReplyKeyboardMarkup(resize_keyboard=True)
             markup.add('Друзья и ЧС👥', 'Меню↩️')
             markup.add('Редактировать профиль⚙️')
-            bot.send_message(message.from_user.id, "\nUsername: <code>"+puname+"</code>\nИмя: "+pname+"\nВозраст: "+str(regpersonAge)+"\nБаланс: "+str(pmon)+RPCoin_emoji+"\nОписание: "+pdes, parse_mode="HTML",reply_markup=markup)
+            bot.send_message(message.from_user.id, "\nUsername: <code>"+puname+"</code>\nИмя: "+pname+"\nВозраст: "+str(page)+"\nБаланс: "+str(pmon)+RPCoin_emoji+"\nОписание: "+pdes, parse_mode="HTML",reply_markup=markup)
         elif message.text == 'Локации📍' or message.text.lower() == '!локации':
             if ploc != 0:
                 personsId = get_persons_in_loc_bd(ploc)
