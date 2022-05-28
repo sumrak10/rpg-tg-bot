@@ -6,19 +6,10 @@ from diagram_generate import generate_diagram_picture
 
 from bd_manage import *
 import config
-
-from sys import platform
-
+from config import oslink
 
 bot = telebot.TeleBot(config.token)
 
-
-if platform == 'win32':
-    oslink = 'rpg-tg-bot/'
-elif platform == 'linux':
-    oslink = './'
-else:
-    print("THIS PLATFORM DON'T SUPPORTED (main.py)")
 
 # ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 regpersonUname = ""
@@ -47,7 +38,9 @@ chat_commands = [[[-3],'!меню','Возвращает вас в главно�
                 [[7],'!монетка','Открывает меню для игры в "Орел или решка"'], #9
                 [[7],'!кости','Открывает меню для игры в кости'], #10
                 [[-3],'!перевод','Переводит деньги персонажу.\nФормат комадны: !перевод [username] [сумма в цифрах]'], #11
-                [[-4],'!жалоба','Отправляет жалобу модераторам. Отправляется ответом (реплаем) на сообщение нарушающее закон.\nФормат команды: !жалоба [коротко о том какой закон нарушает]'],] #12
+                [[-4],'!жалоба','Отправляет жалобу модераторам. Отправляется ответом (реплаем) на сообщение нарушающее закон.\nФормат команды: !жалоба [коротко о том какой закон нарушает]'], #12
+                [[4],'!заказать','Отправляет жалобу модераторам. Отправляется ответом (реплаем) на сообщение нарушающее закон.\nФормат команды: !жалоба [коротко о том какой закон нарушает]'], #13
+                ]
                 # [[-5],'!закрепитьлокацию','Закрепляет локацию (в которой вы находитесь) в списке локаций для более удобного доступа.'],
                 # [[-5],'!открепитьлокацию','Открепляет локацию (в которой вы находитесь) из списка локаций'],]
 # эмоджи
@@ -377,6 +370,82 @@ def policeWork_kb(reportId):
     markup = telebot.types.InlineKeyboardMarkup()
     markup.add(telebot.types.InlineKeyboardButton(text = 'Виновен', callback_data ='work police guilty '+str(reportId)),telebot.types.InlineKeyboardButton(text = 'Не виновен', callback_data ='work police notguilty '+str(reportId)))
     return markup
+
+foodlist = [
+    ['Бургеры',[
+        ['Бургер классический','classic',10],
+        ['Бургер экстра','extra',15],
+        ['Биг бой бургер','bbb',15],
+        ['Биг бой ХХL','bbxxl',20],
+        ['Чизбургер','chees',15],
+        ['Двойной чизбургер','double_chees',20]
+        ]
+    ],
+    ['Пицца',[
+        ['Пицца классическая','classic',20],
+        ['Пицца с грибами','mushrooms',25],
+        ['Пицца с креветками','shrimps',25],
+        ['Пицца барбекю','bbq',25]
+        ]
+    ],
+    ['Закуски',[
+        ['Сэндвич классический','',5],
+        ['Сэндвич домашний','',5],
+        ['Бокс "Куриные крылышки 5шт."','',10],
+        ['Бокс "Креветки 7шт."','',10],
+        ]
+    ],
+    ['Десерты',[
+        ['Сырники','',],
+        ['Донат ванильный','',],
+        ['Донат шоколадный','',],
+        ['Круассан','',],
+        ['Пирожок малиновый','',],
+        ['Пирожок вишневый','',],
+        ]
+    ],
+    ['Напитки',[
+        ['Вода','',],
+        ['Биг бой кола','',],
+        ['Айс бой черный','',],
+        ['Айс бой зеленый','',],
+        ['Капучино','',],
+        ['Американо','',],
+        ['Латте','',],
+        ['Сок яблочный','',],
+        ['Сок апельсиновый','',],
+        ]
+    ],
+    ['Коктейли',[
+        ['Милкшейк ванильный','',],
+        ['Милкшейк фруктовый','',],
+        ['Милкшейк шоколадный','',],
+        ['Милкшейк шоколадный','',],
+        ]
+    ],
+    ['Роллы',[
+        ['','',],
+        ]
+    ],
+    ['Соусы',[
+        ['','',],
+        ]
+    ]
+            ]
+def cafeFood_kb(foodcategory=0,clean=False):
+    markup = telebot.types.InlineKeyboardMarkup()
+    if foodcategory == 0:
+        markup.add(telebot.types.InlineKeyboardButton(text = foodlist[0][0], callback_data ='food 0'),telebot.types.InlineKeyboardButton(text = foodlist[1][0], callback_data ='food 1'))
+        markup.add(telebot.types.InlineKeyboardButton(text = foodlist[2][0], callback_data ='food 2'),telebot.types.InlineKeyboardButton(text = foodlist[3][0], callback_data ='food 3'))
+        markup.add(telebot.types.InlineKeyboardButton(text = foodlist[4][0], callback_data ='food 4'),telebot.types.InlineKeyboardButton(text = foodlist[5][0], callback_data ='food 5'))
+        markup.add(telebot.types.InlineKeyboardButton(text = foodlist[6][0], callback_data ='food 6'),telebot.types.InlineKeyboardButton(text = foodlist[7][0], callback_data ='food 7'))
+    else:
+        for food in range(len(foodlist[foodcategory][2])):
+            markup.add(telebot.types.InlineKeyboardButton(text = foodlist[foodcategory][2][0], callback_data ='food '+str(foodcategory)+' '+str(food)))
+    if clean:
+        markup.add(telebot.types.InlineKeyboardButton(text = 'Очистить заказ', callback_data ='food clean'),telebot.types.InlineKeyboardButton(text = 'Заказать', callback_data ='food buy'))
+    return markup
+
 # /КЛАВИАТУРЫ
 
 # АКЦИИ
@@ -570,11 +639,15 @@ def callbackHandler(call):
                 side = call.data.split()[3]
                 rnd = random.randint(0,1)
                 sides = ['orel','reshka']
+                if side == 'orel':
+                    sidetext = 'Орёл'
+                elif side == 'reshka':
+                    sidetext = 'Решка'
                 if sides[rnd] == side:
-                    bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Поздравляю, Вы выиграли '+str(bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]+bet)+RPCoin_emoji)
+                    bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Выпал '+ sidetext +'\nПоздравляю, Вы выиграли '+str(bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]+bet)+RPCoin_emoji)
                     update_mon_bd(get_uname_by_id(uid),data[5]+bet)
                 else:
-                    bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Увы и ах. Вы потеряли '+str(bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]-bet)+RPCoin_emoji)
+                    bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Выпал '+ sidetext +'\nУвы и ах. Вы потеряли '+str(bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]-bet)+RPCoin_emoji)
                     update_mon_bd(get_uname_by_id(uid),data[5]-bet)
         if gametype == 'kosti':
             if call.data.split()[2] == 'bet':
@@ -602,10 +675,10 @@ def callbackHandler(call):
                     rnd = str(random.randint(1,6))
                     if rnd in kosti_sides:
                         mn = 6 / len(kosti_sides)
-                        bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Вы выиграли: '+str(round(int(kosti_bet)*mn))+RPCoin_emoji+'\nВаш баланс: '+str(data[5]+(round(int(kosti_bet)*mn)-kosti_bet))+RPCoin_emoji)
+                        bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Кость показала '+str(rnd)+'\nВы выиграли: '+str(round(int(kosti_bet)*mn))+RPCoin_emoji+'\nВаш баланс: '+str(data[5]+(round(int(kosti_bet)*mn)-kosti_bet))+RPCoin_emoji)
                         update_mon_bd(get_uname_by_id(uid),data[5]+(round(int(kosti_bet)*mn)-kosti_bet))
                     else:
-                        bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Вы потеряли: '+str(kosti_bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]-kosti_bet)+RPCoin_emoji)
+                        bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Кость показала '+str(rnd)+'Вы потеряли: '+str(kosti_bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]-kosti_bet)+RPCoin_emoji)
                         update_mon_bd(get_uname_by_id(uid),data[5]-kosti_bet)
     elif call.data.split()[0] == 'management':
         mdata = get_data_from_management(user_id)
@@ -672,14 +745,14 @@ def callbackHandler(call):
             reports_data = get_reports_from_bd()
             report_data = []
             for report in reports_data:
-                if str(message.from_user.id) in report[6]:
+                if str(user_id) in report[6]:
                     continue
                 else:
                     report_data = report
             if report_data == []:
-                bot.send_message(message.from_user.id, 'Все жалобы проверены, новых нет.')
+                bot.send_message(user_id, 'Все жалобы проверены, новых нет.')
             else:
-                bot.send_message(message.from_user.id, 'Описание жалобы:\n' + report_data[3] + '\nТекст жалобы:\n' + report_data[4], reply_markup=policeWork_kb(report_data[0]))
+                bot.send_message(user_id, 'Описание жалобы:\n' + report_data[3] + '\nТекст жалобы:\n' + report_data[4], reply_markup=policeWork_kb(report_data[0]))
 
 
 @bot.pre_checkout_query_handler(func=lambda query: True)
@@ -883,7 +956,10 @@ def locationHandler(message, locationlist):
                 continue
             bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> вошел в локацию "Парк" </i>',parse_mode="HTML",disable_web_page_preview=True)
     elif message.text == locationlist[1][2]:
-        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(4)+'.jpg','rb'), caption="Локация: Кафе\nНебольшое кафе находящееся недалеко от вашего дома. Ни чем не приметная, но такая уютная", reply_markup=chat_kb())
+        markup = ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add('!помощь','!локации','!меню')
+        markup.add('!заказать')
+        bot.send_photo(message.from_user.id, open(oslink+'media/img/locations/'+str(4)+'.jpg','rb'), caption="Локация: Кафе\nНебольшое кафе находящееся недалеко от вашего дома. Ни чем не приметная, но такая уютная", reply_markup=markup)
         update_loc_bd(message.from_user.id, "4")
         personsId = get_persons_in_loc_bd(4)
         for i in range(len(personsId)):
@@ -1080,7 +1156,8 @@ def messagesHandler(message):
                     bot.send_message(message.from_user.id, 'Все жалобы проверены, новых нет.')
                 else:
                     bot.send_message(message.from_user.id, 'Описание жалобы:\n' + report_data[3] + '\nТекст жалобы:\n' + report_data[4], reply_markup=policeWork_kb(report_data[0]))
-            # elif pprof == 'Повар':
+            elif pprof == 'Повар':
+                pass
                 
             # elif personProf == 'Суд':
 # ЧАТЫ
@@ -1138,9 +1215,9 @@ def messagesHandler(message):
                         else:
                             clientdata = get_data_from_bd_by_uname(splitMessage[1])
                             if clientdata != 0:
-                                if int(personMon)-int(splitMessage[2])>0:
+                                if int(pmon)-int(splitMessage[2])>0:
                                     update_mon_bd(splitMessage[1], int(clientdata[5])+int(splitMessage[2]))
-                                    update_mon_bd(puname, int(personMon)-int(splitMessage[2]))
+                                    update_mon_bd(puname, int(pmon)-int(splitMessage[2]))
                                     bot.send_message(message.from_user.id,'<i>Вы перевели деньги персонажу <a href="t.me/SmrkRP_bot?start=viewPerson-'+clientdata[1]+'">'+clientdata[2]+'</a> на сумму '+splitMessage[2]+RPCoin_emoji+'</i>',parse_mode="HTML",disable_web_page_preview=True)
                                     bot.send_message(get_id_by_uname(splitMessage[1]),'<i>Персонаж <a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> перевел вам '+splitMessage[2]+RPCoin_emoji+'</i>',parse_mode="HTML",disable_web_page_preview=True)
                                 else:
@@ -1244,6 +1321,9 @@ def messagesHandler(message):
             elif message.text.lower() ==  chat_commands[10][1]: # !кости
                 if ploc == 7:
                     bot.send_message(message.from_user.id, "Выбери ставку", reply_markup=casinoKostiBet_kb())
+            elif message.text.lower() == chat_commands[13][1]: # !заказать
+                if ploc == 4:
+                    bot.send_message(message.from_user.id, 'Что будете заказывать?', reply_markup=cafeFood_kb())
         elif int(ploc) != 0:
             personsId = get_persons_in_loc_bd(ploc)
             myfriends, myenemies = get_friends_and_enemies_list(puname)

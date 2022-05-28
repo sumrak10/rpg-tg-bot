@@ -1,12 +1,9 @@
 import sqlite3
-from sys import platform
+from config import oslink
 
-if platform == 'win32':
-    dbAddress = "rpg-tg-bot/db.sqlite" #for windows
-elif platform == 'linux':
-    dbAddress = "./db.sqlite" # for linux
-else:
-    print("THIS PLATFORM DON'T SUPPORTED (bd_manage.py")
+dbAddress = oslink+'db.sqlite'
+
+
 # (personId,personUname,personName,personAge,personDes,100,0)
 def insert_data_to_bd(id,uname,name,age,des,mon,loc):
     try:
