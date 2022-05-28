@@ -691,9 +691,6 @@ def got_payment(message):
     bot.send_message(message.chat.id,'Поздравляем с покупкой!\n\nЗаходите еще :)')
 # /КОЛБЕКИ  
 
-
-
-
 # ИГРА
 @bot.message_handler(commands=['game'])
 def mainMenu(message):
@@ -972,6 +969,7 @@ def messagesHandler(message):
         pdes = pdata[4]
         pmon = pdata[5]
         ploc = pdata[6]
+        pprof = pdata[12]
         if message.text == 'Меню↩️':
             mainMenu(message)
         elif message.text == 'Редактировать профиль⚙️':
@@ -1068,9 +1066,9 @@ def messagesHandler(message):
                 text += '[<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>] '+sname+' - '+str(sprice)+RPCoin_emoji+'\n Доступно: '+str(samount)+'шт.\n\n'
             bot.send_message(message.from_user.id,'Последнее обновление: '+sdates[-1].replace('/','.')+'\n\n'+text, parse_mode="HTML", disable_web_page_preview=True)
         elif message.text == 'Работа💳':
-            if personProf == '0':
+            if pprof == '0':
                 bot.send_message(message.from_user.id, 'У тебя нет работы!')
-            elif personProf == 'Полиция':
+            elif pprof == 'Полиция':
                 reports_data = get_reports_from_bd()
                 report_data = []
                 for report in reports_data:
@@ -1082,6 +1080,8 @@ def messagesHandler(message):
                     bot.send_message(message.from_user.id, 'Все жалобы проверены, новых нет.')
                 else:
                     bot.send_message(message.from_user.id, 'Описание жалобы:\n' + report_data[3] + '\nТекст жалобы:\n' + report_data[4], reply_markup=policeWork_kb(report_data[0]))
+            # elif pprof == 'Повар':
+                
             # elif personProf == 'Суд':
 # ЧАТЫ
         elif message.text[0] == '!':
