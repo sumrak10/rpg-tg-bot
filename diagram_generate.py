@@ -1,13 +1,8 @@
 from PIL import Image, ImageDraw, ImageFont
-from sys import platform
+from config import oslink
 
 
-if platform == 'win32':
-    oslink = 'rpg-tg-bot/'
-elif platform == 'linux':
-    oslink = './'
-else:
-    print("THIS PLATFORM DON'T SUPPORTED (diagram_generate.py)")
+
 
 def generate_diagram_picture(nums, picturename):
     def mapNum(x,fromLow,fromHigh,toLow,toHigh):
