@@ -124,7 +124,12 @@ def viewPerson(message, user_id=0):
         if data[0] == user_id:
             bot.send_message(user_id, 'Вы можете посмотреть свой профиль с помощью пункта меню "Профиль" в главном меню')
         else:
-            bot.send_message(user_id, 'Username: <code>' + data[1] + '</code>\nИмя: '+data[2] + '\nВозраст: '+str(data[3]) + '\nОписание: '+data[4],parse_mode="HTML",reply_markup = relationShip_kb(user_id, str(data[0])))
+            wedding_user = get_wedding(get_id_by_uname(message))
+            wedding_text = ''
+            if wedding_user != 0:
+                wdata = get_data_from_bd_by_id(wedding_user)
+                wedding_text = '\nВ браке с: <a href="t.me/SmrkRP_bot?start=viewPerson-'+wdata[1]+'">['+wdata[1]+'] '+wdata[2]+'</a>'
+            bot.send_message(user_id, 'Username: <code>' + data[1] + '</code>\nИмя: '+data[2] + '\nВозраст: '+str(data[3]) + '\nОписание: '+data[4]+wedding_text,reply_markup = relationShip_kb(user_id, str(data[0])), disable_web_page_preview=True, parse_mode="HTML" )
 def viewStock(suname,uid):
     sdata = get_stock_by_uname(suname)
     mstock = get_data_from_management(uid)[5]
@@ -1109,7 +1114,13 @@ def messagesHandler(message):
             markup = ReplyKeyboardMarkup(resize_keyboard=True)
             markup.add('Друзья и ЧС👥', 'Меню↩️')
             markup.add('Редактировать профиль⚙️')
-            bot.send_message(message.from_user.id, "\nUsername: <code>"+puname+"</code>\nИмя: "+pname+"\nВозраст: "+str(page)+"\nБаланс: "+str(pmon)+RPCoin_emoji+"\nОписание: "+pdes, parse_mode="HTML",reply_markup=markup)
+            wedding_user = get_wedding(message.from_user.id)
+            wedding_text = ''
+            if wedding_user != 0:
+                wdata = get_data_from_bd_by_id(wedding_user)
+                print(wdata)
+                wedding_text = '\nВ браке с: <a href="t.me/SmrkRP_bot?start=viewPerson-'+wdata[1]+'">['+wdata[1]+'] '+wdata[2]+'</a>'
+            bot.send_message(message.from_user.id, "\nUsername: <code>"+puname+"</code>\nИмя: "+pname+"\nВозраст: "+str(page)+"\nБаланс: "+str(pmon)+RPCoin_emoji+"\nОписание: "+pdes+wedding_text, parse_mode="HTML",reply_markup=markup,disable_web_page_preview=True)
         elif message.text == 'Локации📍' or message.text.lower() == '!локации':
             if ploc != 0:
                 personsId = get_persons_in_loc_bd(ploc)
@@ -1431,7 +1442,6 @@ def messagesHandler(message):
                                 friends, enemies = get_friends_and_enemies_list(pdata[0])
                                 if not(str(message.from_user.id) in enemies):
                                     wedding_user = get_wedding(message.from_user.id)
-                                    print(wedding_user)
                                     if wedding_user == 0:
                                         wedding_user = get_wedding(get_id_by_uname(uname))
                                         if wedding_user == 0:
