@@ -845,6 +845,28 @@ def mainMenu(message):
 
 
 
+
+def webAppKeyboard(): #создание клавиатуры с webapp кнопкой
+   keyboard = telebot.types.InlineKeyboardMarkup() #создаем клавиатуру
+   webAppTest = telebot.types.WebAppInfo("https://62.84.123.173:80/") #создаем webappinfo - формат хранения url
+   one_butt = telebot.types.InlineKeyboardButton(text="клик!", allback_data ="asd",web_app=webAppTest) #создаем кнопку типа webapp
+   keyboard.add(one_butt) #добавляем кнопки в клавиатуру
+
+   return keyboard #возвращаем клавиатуру
+
+@bot.message_handler(commands=['web'])
+def webApp(message):
+    bot.send_message(message.from_user.id, 'Тестовый текст', reply_markup=webAppKeyboard())
+
+@bot.message_handler(content_types="web_app_data") #получаем отправленные данные 
+def answer(webAppMes):
+   print(webAppMes) #вся информация о сообщении
+   print(webAppMes.web_app_data.data) #конкретно то что мы передали в бота
+   bot.send_message(webAppMes.chat.id, f"получили инофрмацию из веб-приложения: {webAppMes.web_app_data.data}") 
+   #отправляем сообщение в ответ на отправку данных из веб-приложения 
+
+
+
 # ПРОФИЛЬ
 def profileRegHandler(message):
     if message.text == '!меню':
