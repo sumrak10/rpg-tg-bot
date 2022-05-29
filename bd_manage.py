@@ -565,3 +565,35 @@ def get_raffle_from_bd(code,uid):
     except:
         return 404
 # /РОЗЫГРЫШ
+
+def insert_new_person_in_quests(id,date,businessStr):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(id,0,0,0,0,0)]
+    sql = """INSERT INTO quests
+                VALUES (?,?,?,?,?,?)"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def get_quests_by_id(id):
+    try:
+        conn = sqlite3.connect(dbAddress)
+        cursor = conn.cursor()
+        sql = "SELECT * FROM quests WHERE id=?"
+        cursor.execute(sql, [(id)])
+        fetch_data = cursor.fetchall()
+        conn.close()
+        return fetch_data[0]
+    except:
+        return 0
+def add_num_in_quest(id,quest,num):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    sql = "SELECT quest"+str(quest)+" FROM quests WHERE id=?"
+    cursor.execute(sql, [(id)])
+    fetch_data = cursor.fetchone()
+    data = [(str(int(num)+int(fetch_data[0])), id)]
+    sql = "UPDATE quests SET quest"+str(quest)+" = ? WHERE id = ?"
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
