@@ -848,7 +848,7 @@ def mainMenu(message):
 
 def webAppKeyboard(): #создание клавиатуры с webapp кнопкой
    keyboard = telebot.types.InlineKeyboardMarkup() #создаем клавиатуру
-   webAppTest = telebot.types.WebAppInfo("https://62.84.123.173:80/") #создаем webappinfo - формат хранения url
+   webAppTest = telebot.types.WebAppInfo("https://sumrak10.github.io/smrkrp-tower/") #создаем webappinfo - формат хранения url
    one_butt = telebot.types.InlineKeyboardButton(text="клик!", allback_data ="asd",web_app=webAppTest) #создаем кнопку типа webapp
    keyboard.add(one_butt) #добавляем кнопки в клавиатуру
 
