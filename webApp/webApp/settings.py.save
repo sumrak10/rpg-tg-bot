@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-xac+=i1uplt1j*&^f4-_d7o4mrkd52o5f2bp#%sr2t@_0ls*q$
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-RUNSERVERPLUS_SERVER_ADDRESS_PORT = '0.0.0.0:80'
+
 
 # Application definition
 
