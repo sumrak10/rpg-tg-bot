@@ -1,3 +1,4 @@
+from ast import parse
 import requests, random, datetime, sys, time, argparse, os
 import telebot
 from telebot.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -12,6 +13,7 @@ bot = telebot.TeleBot(config.token)
 
 
 # ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+reginvitedperson = ""
 regpersonUname = ""
 regpersonName = ""
 regpersonAge = ""
@@ -23,10 +25,13 @@ trueSimInName = 'абвгдеёжзийклмнопрстуфхцчшщъыьэ�
 func_used_now = False
 # регистрация
 minUnameLen = 3
-
+# эмоджи
+not_available_emoji = '❌'
+RPCoin_emoji = '🪙'
 # чат   
 # -1 - Условный код своего дома -2 Условный код не своего дома -3 все локации -4 - Все локации кроме меню -5 - Все созданные персонажами локации
-chat_commands = [[[-3],'!меню','Возвращает вас в главное меню'],  #0
+chat_commands = [
+                [[-3],'!меню','Возвращает вас в главное меню'],  #0
                 [[-3],'!баланс','Показывает ваш баланс'], #1
                 [[-3],'!профиль','показывает профиль данного персонажа.\nФормат команды: !профиль [username]'], #2
                 [[-3],'!помощь','Выводит список всех доступных команд в данной локации'], #3
@@ -39,13 +44,13 @@ chat_commands = [[[-3],'!меню','Возвращает вас в главно�
                 [[7],'!кости','Открывает меню для игры в кости'], #10
                 [[-3],'!перевод','Переводит деньги персонажу.\nФормат комадны: !перевод [username] [сумма в цифрах]'], #11
                 [[-4],'!жалоба','Отправляет жалобу модераторам. Отправляется ответом (реплаем) на сообщение нарушающее закон.\nФормат команды: !жалоба [коротко о том какой закон нарушает]'], #12
+                [[-4],'!свадьба','Связывыает вас узами брака с другим персонажем. Стоимость услуги 500'+RPCoin_emoji+'\nФормат команды: !свадьба [username]'], # 13
+                [[-4],'!развод','Расторгает ваш брак'], # 14
                 # [[4],'!заказать','Отправляет жалобу модераторам. Отправляется ответом (реплаем) на сообщение нарушающее закон.\nФормат команды: !жалоба [коротко о том какой закон нарушает]'], #13
                 ]
                 # [[-5],'!закрепитьлокацию','Закрепляет локацию (в которой вы находитесь) в списке локаций для более удобного доступа.'],
                 # [[-5],'!открепитьлокацию','Открепляет локацию (в которой вы находитесь) из списка локаций'],]
-# эмоджи
-not_available_emoji = '❌'
-RPCoin_emoji = '🪙'
+
 # локации
 clubopen = datetime.time(18, 0)
 clubclose = datetime.time(6, 0)
@@ -155,13 +160,19 @@ def rafflePrize(rstr,uid):
     elif status == 300:
         bot.send_message(uid, 'Все призы разобрали :(')
 
+    
+
+
 
 # /ГЛОБАЛЬНЫЕ ФУНКЦИИ
 
 # РЕГИСТРАЦИЯ
 @bot.message_handler(commands=['start'])
 def start(message):
+    global reginvitedperson
     startdata = message.text[7:]
+    if startdata.split('-')[0] == 'inviteFriend':
+        reginvitedperson = startdata.split('-')[1]
     if startdata.split('-')[0] == 'viewPerson':
         bot.delete_message(message.from_user.id, message.message_id)
         viewPerson(startdata.split('-')[1], message.from_user.id)
@@ -178,7 +189,7 @@ def start(message):
         if personData == 0:
             markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add('Привет! Я хочу создать персонажа!')
-            msg = bot.send_message(message.from_user.id, "Привет! \nЯ вижу ты новенький, бегом создавать персонажа :)", reply_markup=markup)	
+            msg = bot.send_message(message.from_user.id, "Привет! \nЯ вижу ты новенький, бегом создавать персонажа :)", reply_markup=markup)
             bot.register_next_step_handler(msg, createPerson)
 def createPerson(message):
     msg = bot.send_message(message.from_user.id, 'Как тебя будут звать?\nИмейте ввиду что длина имени не должна превышать 15 символов и должна содержать только символы английского и русского алфавита.')
@@ -235,7 +246,10 @@ def initPerson(message):
     global regpersonDes
     regpersonDes = message.text
     if (insert_data_to_bd(message.from_user.id,regpersonUname,regpersonName,regpersonAge,regpersonDes,100,0)):
-        bot.send_message(message.from_user.id, "Отлично, персонаж создан! \n\nПодписывайся на <a href='t.me/SmrkRP'>канал</a> чтобы на прямую участвовать в развитии проекта, узнавать о грядущих обновлениях.  \n\n А еще там проводятся розыгрыши :*", parse_mode="HTML", disable_web_page_preview=True)
+        bot.send_message(message.from_user.id, "Отлично, персонаж создан! \n\nПодписывайся на <a href='t.me/SmrkRP'>канал</a> чтобы на прямую участвовать в развитии проекта, узнавать о грядущих обновлениях.\n\nА еще там проводятся розыгрыши :*", parse_mode="HTML", disable_web_page_preview=True)
+        if get_data_from_bd_by_id(reginvitedperson) != 0:
+            bot.send_message(reginvitedperson, f'Лови 500{RPCoin_emoji} за приглашенного друга!')
+            add_num_to_mon_by_id(reginvitedperson,500)
         mainMenu(message)
     else:
         bot.send_message(message.from_user.id, "Возникла ошибка! Напишите /start чтобы попробовать еще раз!")
@@ -273,8 +287,8 @@ def casinoMonetkaBet_kb():
     return markup
 def casinoMonetkaSide_kb(bet):
     markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton(text = 'Орёл', callback_data ='casino monetka '+str(bet)+' orel'))
-    markup.add(telebot.types.InlineKeyboardButton(text = 'Решка', callback_data ='casino monetka '+str(bet)+' reshka'))
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Орёл', callback_data ='casino monetka '+str(bet)+' 1'))
+    markup.add(telebot.types.InlineKeyboardButton(text = 'Решка', callback_data ='casino monetka '+str(bet)+' 2'))
     return markup
 def casinoKostiBet_kb():
     markup = telebot.types.InlineKeyboardMarkup()
@@ -349,11 +363,6 @@ def garden_manage_kb(cell):
     markup = telebot.types.InlineKeyboardMarkup()
     markup.add(telebot.types.InlineKeyboardButton(text = 'Назад', callback_data ='garden buy back'))
     markup.add(telebot.types.InlineKeyboardButton(text = 'Убрать растение', callback_data ='garden clean '+str(cell)))
-    return markup
-def stock_kb():
-    markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton(text = 'Купить бизнес', callback_data ='management get business'))
-    markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать заработок', callback_data ='management get income'))
     return markup
 def stock_buy_sell_kb(suname,user_amount):
     stockbuy = 'stock buy '+suname
@@ -487,6 +496,7 @@ def stockBuySellHandler(message, func, suname, mon, sprice, samount):
                         update_user_stocks(message.from_user.id, new_stocks_data)
                         update_mon_bd_by_id(message.from_user.id, str(int(mon) - int(sprice) * stocks_amount))
                         update_stock_amount_by_suname(suname, str( int(samount) - int(stocks_amount) ))
+                        add_num_in_quest(message.from_user.id, 3, stocks_amount)
                         bot.send_message(message.from_user.id ,'Вы успешно приобрели:\n'+str(stocks_amount)+'шт. акций [<a href="t.me/SmrkRP_bot?start=viewStock-'+suname+'">'+suname+'</a>]\nНа сумму:\n'+str(int(sprice) * stocks_amount)+RPCoin_emoji,reply_markup=moneyControlPanel_kb(), parse_mode="HTML",disable_web_page_preview=True)
                     except:
                         bot.send_message(message.from_user.id ,'Что-то пошло не так',reply_markup=moneyControlPanel_kb())
@@ -534,7 +544,28 @@ def stockBuySellHandler(message, func, suname, mon, sprice, samount):
 def callbackHandler(call):
     global func_used_now
     user_id = call.message.chat.id
-    if call.data.split()[0] == 'stock':
+    if call.data.split()[0] == 'wedding':
+        answer = call.data.split()[1]
+        user_id2 = int(call.data.split()[2])
+        pdata = get_data_from_bd_by_id(user_id)
+        personsId = get_persons_in_loc_bd(pdata[6])
+        ans = ''
+        if answer == 'yes':
+            ans = 'Да'
+            update_wedding(user_id, user_id2)
+            update_wedding(user_id2, user_id)
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text='Поздравляю! Вы в браке!')
+            add_num_to_mon_by_id(user_id2, -500)
+        else:
+            ans = 'Нет'
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text='Свободной птице не нужны яйца!')
+        
+        for person in personsId:
+            if person[0] != user_id:
+                    bot.send_message(person[0], '<a href="t.me/SmrkRP_bot?start=viewPerson-'+pdata[1]+'">'+pdata[2]+'</a> <i>отвечает "'+ans+'" на предложение!</i>', parse_mode="HTML", disable_web_page_preview=True)
+        
+
+    elif call.data.split()[0] == 'stock':
         func = call.data.split()[1]
         suname = call.data.split()[2]
         data = get_data_from_bd_by_id(user_id)
@@ -642,19 +673,20 @@ def callbackHandler(call):
                 bet = int(call.data.split()[2])
                 side = call.data.split()[3]
                 rnd = random.randint(0,1)
-                sides = ['orel','reshka']
-                if side == 'orel':
-                    sidetext = 'Орёл'
-                elif side == 'reshka':
-                    sidetext = 'Решка'
+                sides = ['1','2']
+                sidetext = ''
+                if sides[rnd] == '1':
+                    sidetext = 'Выпал орёл'
+                elif sides[rnd] == '2':
+                    sidetext = 'Выпала решка'
                 if sides[rnd] == side:
-                    bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Выпал '+ sidetext +'\nПоздравляю, Вы выиграли '+str(bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]+bet)+RPCoin_emoji)
+                    bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text=sidetext +'\nПоздравляю, Вы выиграли '+str(bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]+bet)+RPCoin_emoji)
                     update_mon_bd(get_uname_by_id(uid),data[5]+bet)
-                    add_num_in_quest(user_id,1,bet)
+                    add_num_in_quest(user_id,2,bet)
                 else:
-                    bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Выпал '+ sidetext +'\nУвы и ах. Вы потеряли '+str(bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]-bet)+RPCoin_emoji)
+                    bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text=sidetext +'\nУвы и ах. Вы потеряли '+str(bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]-bet)+RPCoin_emoji)
                     update_mon_bd(get_uname_by_id(uid),data[5]-bet)
-                    add_num_in_quest(user_id,1,-bet)
+                    add_num_in_quest(user_id,1,bet)
         if gametype == 'kosti':
             if call.data.split()[2] == 'bet':
                 global kosti_sides, kosti_bet
@@ -683,11 +715,11 @@ def callbackHandler(call):
                         mn = 6 / len(kosti_sides)
                         bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Кость показала '+str(rnd)+'\nВы выиграли: '+str(round(int(kosti_bet)*mn))+RPCoin_emoji+'\nВаш баланс: '+str(data[5]+(round(int(kosti_bet)*mn)-kosti_bet))+RPCoin_emoji)
                         update_mon_bd(get_uname_by_id(uid),data[5]+(round(int(kosti_bet)*mn)-kosti_bet))
-                        add_num_in_quest(user_id,1,(round(int(kosti_bet)*mn)-kosti_bet))
+                        add_num_in_quest(user_id,2,(round(int(kosti_bet)*mn)-kosti_bet))
                     else:
-                        bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Кость показала '+str(rnd)+'Вы потеряли: '+str(kosti_bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]-kosti_bet)+RPCoin_emoji)
+                        bot.edit_message_text(chat_id=uid, message_id=call.message.message_id, text='Кость показала '+str(rnd)+'\nВы потеряли: '+str(kosti_bet)+RPCoin_emoji+'\nВаш баланс: '+str(data[5]-kosti_bet)+RPCoin_emoji)
                         update_mon_bd(get_uname_by_id(uid),data[5]-kosti_bet)
-                        add_num_in_quest(user_id,1,-(round(int(kosti_bet)*mn)-kosti_bet))
+                        add_num_in_quest(user_id,1,kosti_bet)
     elif call.data.split()[0] == 'management':
         mdata = get_data_from_management(user_id)
         data = get_data_from_bd_by_id(user_id)
@@ -1172,39 +1204,59 @@ def messagesHandler(message):
                 insert_new_person_in_quests(message.from_user.id)
                 qdata = get_quests_by_id(message.from_user.id)
 
-            bot.send_message(message.from_user.id,f'Приглашай друзей и получай 500{RPCoin_emoji} за каждого!\nОтправляй вот эту ссылку: t.me/SmrkRP_bot?start=inviteFriend-{str(message.from_user.id)}\nТы получишь деньги если друг никогда не пользовался этим ботом и только если он перейдет по данной ссылке!', disable_web_page_preview=True)
-            
-            markup = telebot.types.InlineKeyboardMarkup()
             myfriends, myenemies = get_friends_and_enemies_list(message.from_user.id)
-            if myfriends >= 10:
-                markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать приз', callback_data ='quests getquestmoney 500'))
-            bot.send_message(message.from_user.id,f'<b>Настоящий друг</b>\nДобавь в друзья 10 персонажей\nДобавлено: {str(len(myfriends))}\nНаграда: 500{RPCoin_emoji}',parse_mode="HTML",reply_markup=markup)
+            friendscount = len(myfriends.split())
+            quest_msg = ''
+            if friendscount >= 5:
+                quest_msg = '\n\n<b>Награда получена!</b>'
+            if int(qdata[1]) < 1:
+                add_num_to_mon_by_id(message.from_user.id,500)
+                add_one_in_quest_check(message.from_user.id,0)
+            bot.send_message(message.from_user.id,f'<b>Настоящий друг</b>\nДобавь в друзья 5 персонажей\nДобавлено: {str(friendscount)}\nНаграда: 500{RPCoin_emoji}{quest_msg}',parse_mode="HTML")
+
+            quest_msg = ''
+            if int(qdata[2]) >= 5000:
+                quest_msg = '\n\n<b>Награда получена!</b>'
+                if  int(qdata[3]) < 1:
+                    add_num_to_mon_by_id(message.from_user.id,1000)
+                    add_one_in_quest_check(message.from_user.id,1)
+            bot.send_message(message.from_user.id,f'<b>Азартный игрок</b>\nПроиграй в казино более 5000{RPCoin_emoji}\nПроиграно: {str(qdata[2])}\nНаграда: 1000{RPCoin_emoji}{quest_msg}',parse_mode="HTML")
             
-            markup = telebot.types.InlineKeyboardMarkup()
-            if qdata[1] >= 5000:
-                markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать приз', callback_data ='quests getquestmoney 1000'))
-            bot.send_message(message.from_user.id,f'<b>Азартный игрок</b>\nПроиграй в казино более 5000{RPCoin_emoji}\nПроиграно: {str(qdata[1])}\nНаграда: 1000{RPCoin_emoji}',parse_mode="HTML",reply_markup=markup)
+            quest_msg = ''
+            if int(qdata[4]) >= 10000:
+                quest_msg = '\n\n<b>Награда получена!</b>'
+                if int(qdata[5]) < 1:
+                    add_num_to_mon_by_id(message.from_user.id,5000)
+                    add_one_in_quest_check(message.from_user.id,2)
+            bot.send_message(message.from_user.id,f'<b>С фортуной на "ты"</b>\nВыиграй в казино более 10000{RPCoin_emoji}\nВыиграно: {str(qdata[4])}\nНаграда: 5000{RPCoin_emoji}{quest_msg}',parse_mode="HTML")
             
-            markup = telebot.types.InlineKeyboardMarkup()
-            if qdata[2] >= 10000:
-                markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать приз', callback_data ='quests getquestmoney 5000'))
-            bot.send_message(message.from_user.id,f'<b>С фортуной на "ты"</b>\nВыиграй в казино более 10000{RPCoin_emoji}\nВыиграно: {str(qdata[2])}\nНаграда: 5000{RPCoin_emoji}',parse_mode="HTML",reply_markup=markup)
+            quest_msg = ''
+            if qdata[6] >= 1000:
+                quest_msg = '\n\n<b>Награда получена!</b>'
+                if int(qdata[7]) < 1:
+                    add_num_to_mon_by_id(message.from_user.id,500)
+                    add_one_in_quest_check(message.from_user.id,3)
+            bot.send_message(message.from_user.id,f'<b>Мамин инвестор</b>\nКупи более 1000 акций\nКуплено: {str(qdata[6])}\nНаграда: 500{RPCoin_emoji}{quest_msg}',parse_mode="HTML")
             
-            markup = telebot.types.InlineKeyboardMarkup()
-            if qdata[3] >= 1000:
-                markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать приз', callback_data ='quests getquestmoney 500'))
-            bot.send_message(message.from_user.id,f'<b>Мамин инвестор</b>\nКупи более 1000 акций\nКуплено: {str(qdata[3])}\nНаграда: 500{RPCoin_emoji}',parse_mode="HTML",reply_markup=markup)
+            quest_msg = ''
+            if qdata[8] >= 5:
+                quest_msg = '\n\n<b>Награда получена!</b>'
+                if int(qdata[9]) < 1:
+                    add_num_to_mon_by_id(message.from_user.id,500)
+                    add_one_in_quest_check(message.from_user.id,4)
+            bot.send_message(message.from_user.id,f'<b>Огородник года</b>\nПотеряй урожай более 5 раз\nПотеряно: {str(qdata[8])}\nНаграда: 500{RPCoin_emoji}{quest_msg}',parse_mode="HTML")
             
-            markup = telebot.types.InlineKeyboardMarkup()
-            if qdata[4] >= 5:
-                markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать приз', callback_data ='quests getquestmoney 500'))
-            bot.send_message(message.from_user.id,f'<b>Огородник года</b>\nПотеряй урожай более 5 раз\nПотеряно: {str(qdata[4])}\nНаграда: 500{RPCoin_emoji}',parse_mode="HTML",reply_markup=markup)
+            quest_msg = ''
+            if qdata[10] >= 10000:
+                quest_msg = '\n\n<b>Награда получена!</b>'
+                if int(qdata[11]) < 1:
+                    add_num_to_mon_by_id(message.from_user.id,5000)
+                    add_one_in_quest_check(message.from_user.id,5)
+            bot.send_message(message.from_user.id,f'<b>Дед (не инсайд)</b>\nОтправь более 10000 сообщений в глобальных локациях. Все локации кроме своего и чужого дома. Спам является нарушением.\nОтправлено: {qdata[10]}\nНаграда: 5000{RPCoin_emoji}{quest_msg}',parse_mode="HTML")
+
+            bot.send_message(message.from_user.id,f'Приглашай друзей и получай 500{RPCoin_emoji} за каждого!\nОтправляй вот эту ссылку:\nt.me/SmrkRP_bot?start=inviteFriend-{str(message.from_user.id)}\nТы получишь деньги если друг никогда не пользовался этим ботом и только если он перейдет по данной ссылке!', disable_web_page_preview=True)
             
-            markup = telebot.types.InlineKeyboardMarkup()
-            if qdata[5] >= 10000:
-                markup.add(telebot.types.InlineKeyboardButton(text = 'Забрать приз', callback_data ='quests getquestmoney 5000'))
-            bot.send_message(message.from_user.id,f'<b>Дед (не инсайд)</b>\nОтправь более 10000 сообщений в глобальных локациях. Все локации кроме своего и чужого дома. Спам является нарушением.\nОтправлено: {qdata[5]}\nНаграда: 5000{RPCoin_emoji}',parse_mode="HTML",reply_markup=markup)
-            # ЧАТЫ
+# ЧАТЫ
         elif message.text[0] == '!':
             splitMessage = message.text.split()
             if message.text.lower() == chat_commands[0][1]: # !меню
@@ -1301,6 +1353,7 @@ def messagesHandler(message):
                     update_garden(message.from_user.id,'0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 0-0 ')
                     gdata = get_data_from_gardening(message.from_user.id)
                     bot.send_message(message.from_user.id,'Вы не поливали сад более 1 дня поэтому весь урожай высох!',reply_markup=garden_kb(gdata[1]))
+                    add_num_in_quest(message.from_user.id,4,1)
                 else:
                     bot.send_message(message.from_user.id,'Последний полив: '+gdata[2],reply_markup=garden_kb(gdata[1]))
 
@@ -1368,7 +1421,56 @@ def messagesHandler(message):
             # elif message.text.lower() == chat_commands[13][1]: # !заказать
             #     if ploc == 4:
             #         bot.send_message(message.from_user.id, 'Что будете заказывать?', reply_markup=cafeFood_kb())
+            elif splitMessage[0].lower() == chat_commands[13][1]: # !свадьба
+                if len(splitMessage) > 1:
+                    uname = splitMessage[1]
+                    if uname != puname:
+                        pdata = get_data_from_bd_by_uname(uname)
+                        if pdata != 0:
+                            if int(pdata[6]) == int(ploc):
+                                friends, enemies = get_friends_and_enemies_list(pdata[0])
+                                if not(str(message.from_user.id) in enemies):
+                                    wedding_user = get_wedding(message.from_user.id)
+                                    print(wedding_user)
+                                    if wedding_user == 0:
+                                        wedding_user = get_wedding(get_id_by_uname(uname))
+                                        if wedding_user == 0:
+                                            if pmon >= 500:
+                                                markup = telebot.types.InlineKeyboardMarkup()
+                                                markup.add(telebot.types.InlineKeyboardButton(text = 'Нет', callback_data ='wedding no '+str(message.from_user.id)),telebot.types.InlineKeyboardButton(text = 'Да', callback_data ='wedding yes '+str(message.from_user.id)))
+                                                bot.send_message(pdata[0],'Готовы ли вы связать свою жизнь с <a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> пока смерть не разлучит вас?',parse_mode="HTML", disable_web_page_preview=True, reply_markup=markup)
+                                                bot.send_message(message.from_user.id, 'Предложение отправлено!')
+                                                for person in get_persons_in_loc_bd(ploc):
+                                                    if person[0] != message.from_user.id and person[0] != get_id_by_uname(uname):
+                                                        bot.send_message(person[0],'<a href="SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a><i> делает предложение </i><a href="SmrkRP_bot?start=viewPerson-'+uname+'">'+pdata[2]+'</a>',parse_mode="HTML",disable_web_page_preview=True)
+                                            else:
+                                                bot.send_message(message.from_user.id, 'Проведение свадьбы стоит 500'+RPCoin_emoji)
+                                        else:
+                                            bot.send_message(message.from_user.id, 'Персонаж уже в браке')
+                                    else:
+                                        bot.send_message(message.from_user.id, 'Вы уже в браке')
+                                else:
+                                    bot.send_message(message.from_user.id, 'Вы в черном списке у данного персонажа')
+                            else:
+                                bot.send_message(message.from_user.id, 'Вы не рядом с этим персонажем')
+                        else:
+                            bot.send_message(message.from_user.id, 'Сообщение не доставлено! Проверьте корректность введеного username')
+                    else:
+                        bot.send_message(message.from_user.id, 'Ошибка, вы ввели свой же username!')
+            elif message.text.lower() == chat_commands[14][1]: # !развод
+                wedding_user = get_wedding(message.from_user.id)
+                if wedding_user != 0:
+                    update_wedding(message.from_user.id,0)
+                    update_wedding(wedding_user,0)
+                    bot.send_message(message.from_user.id, 'Вы больше не состоите в браке!')
+                    bot.send_message(wedding_user, 'Вы больше не состоите в браке!')
+                else:
+                    bot.send_message(message.from_user.id, 'Вы не состоите в браке!')
+                        
+                        
         elif int(ploc) != 0:
+            if 0 < int(ploc) < 100:
+                add_num_in_quest(message.from_user.id,5,1) 
             personsId = get_persons_in_loc_bd(ploc)
             myfriends, myenemies = get_friends_and_enemies_list(message.from_user.id)
             add_one_in_company_budget(ploc)
@@ -1376,7 +1478,7 @@ def messagesHandler(message):
                 urfriends, urenemies = get_friends_and_enemies_list(i[0])
                 if i[0] == message.from_user.id:
                     continue
-                if  message.from_user.id in urenemies:
+                if message.from_user.id in urenemies:
                     bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
                 else:
                     if not(i[1] in myenemies):

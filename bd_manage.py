@@ -13,9 +13,9 @@ def insert_data_to_bd(id,uname,name,age,des,mon,loc):
         sql = """INSERT INTO persons
                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
         cursor.executemany(sql, data)
-        data = [(id,uname,'','')]
+        data = [(id,uname,'','',0)]
         sql = """INSERT INTO relationship
-                    VALUES (?,?,?,?)"""
+                    VALUES (?,?,?,?,?)"""
         cursor.executemany(sql, data)
         conn.commit()
         conn.close()
@@ -115,6 +115,9 @@ def add_num_to_mon_by_id(id,val):
     cursor.executemany(sql, data)
     conn.commit()
     conn.close()
+
+
+
 def get_friends_and_enemies_list(id):
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
@@ -251,6 +254,26 @@ def del_enemy(id, enemy):
     conn.commit()
     conn.close()
     return status
+def update_wedding(id,wid):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    data = [(wid, id)]
+    sql = """UPDATE relationship
+			SET wedding = ?
+			WHERE id = ?"""
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def get_wedding(id):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    sql = "SELECT wedding FROM relationship WHERE id=?"
+    cursor.execute(sql, [(id)])
+    fetch_data = cursor.fetchall()
+    fetch_data_reg = fetch_data[0][0]
+    conn.commit()
+    conn.close()
+    return fetch_data_reg
 def get_data_from_management(id):
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
@@ -566,12 +589,12 @@ def get_raffle_from_bd(code,uid):
         return 404
 # /РОЗЫГРЫШ
 
-def insert_new_person_in_quests(id,date,businessStr):
+def insert_new_person_in_quests(id):
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
-    data = [(id,0,0,0,0,0)]
+    data = [(id,0,0,0,0,0,0,0,0,0,0,0)]
     sql = """INSERT INTO quests
-                VALUES (?,?,?,?,?,?)"""
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"""
     cursor.executemany(sql, data)
     conn.commit()
     conn.close()
@@ -594,6 +617,17 @@ def add_num_in_quest(id,quest,num):
     fetch_data = cursor.fetchone()
     data = [(str(int(num)+int(fetch_data[0])), id)]
     sql = "UPDATE quests SET quest"+str(quest)+" = ? WHERE id = ?"
+    cursor.executemany(sql, data)
+    conn.commit()
+    conn.close()
+def add_one_in_quest_check(id,quest):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    sql = "SELECT quest"+str(quest)+"_check FROM quests WHERE id=?"
+    cursor.execute(sql, [(id)])
+    fetch_data = cursor.fetchone()
+    data = [(str(int(fetch_data[0])+1), id)]
+    sql = "UPDATE quests SET quest"+str(quest)+"_check = ? WHERE id = ?"
     cursor.executemany(sql, data)
     conn.commit()
     conn.close()
