@@ -849,7 +849,7 @@ def mainMenu(message):
 def webAppKeyboard(): #создание клавиатуры с webapp кнопкой
    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
    webAppTest = telebot.types.WebAppInfo("https://sumrak10.github.io/smrkrp-tower/") #создаем webappinfo - формат хранения url
-   one_butt = telebot.types.KeyboardButton(text="клик!", allback_data ="asd",web_app=webAppTest) #создаем кнопку типа webapp
+   one_butt = telebot.types.KeyboardButton(text="клик!", web_app=webAppTest) #создаем кнопку типа webapp
    keyboard.add(one_butt) #добавляем кнопки в клавиатуру
 
    return keyboard #возвращаем клавиатуру
@@ -860,10 +860,17 @@ def webApp(message):
 
 @bot.message_handler(content_types="web_app_data") #получаем отправленные данные 
 def answer(webAppMes):
-   print(webAppMes) #вся информация о сообщении
-   print(webAppMes.web_app_data.data) #конкретно то что мы передали в бота
-   bot.send_message(webAppMes.chat.id, f"получили инофрмацию из веб-приложения: {webAppMes.web_app_data.data}") 
-   #отправляем сообщение в ответ на отправку данных из веб-приложения 
+    # print(webAppMes.from_user.id) #вся информация о сообщении
+    # print(webAppMes.web_app_data.data) #конкретно то что мы передали в бота
+    if webAppMes.web_app_data.data.split('-')[1] == 'tower':
+        score = webAppMes.web_app_data.data.split('-')[1]
+        if insert_new_person_in_towerminigame(webAppMes.from_user.id,score):
+            bot.send_message(webAppMes.chat.id, 'Это совсем даже не плохо для первого раза, но я уверен что ты можешь лучше!')
+        else:
+            if update_score_in_towerminigame(webAppMes.from_user.id,score):
+                bot.send_message(webAppMes.chat.id, 'Поздравляю, ты побил свой рекорд :)')
+            else:
+                bot.send_message(webAppMes.chat.id, 'Кажется ты не побил свой рекорд :(')
 
 
 
