@@ -588,7 +588,7 @@ def get_raffle_from_bd(code,uid):
     except:
         return 404
 # /РОЗЫГРЫШ
-
+# КВЕСТЫ
 def insert_new_person_in_quests(id):
     conn = sqlite3.connect(dbAddress)
     cursor = conn.cursor()
@@ -631,3 +631,39 @@ def add_one_in_quest_check(id,quest):
     cursor.executemany(sql, data)
     conn.commit()
     conn.close()
+# /КВЕСТЫ
+# МИНИ ИГРЫ
+def insert_new_person_in_towerminigame(id,val):
+    try:
+        conn = sqlite3.connect(dbAddress)
+        cursor = conn.cursor()
+        data = [(id,val)]
+        sql = """INSERT INTO tower_minigame
+                    VALUES (?,?)"""
+        cursor.executemany(sql, data)
+        conn.commit()
+        conn.close()
+        return 1
+    except:
+        return 0
+def update_score_in_towerminigame(id,val):
+    conn = sqlite3.connect(dbAddress)
+    cursor = conn.cursor()
+    sql = "SELECT * FROM tower_minigame WHERE id=?"
+    cursor.execute(sql, [(id)])
+    fetch_data = cursor.fetchone()
+    score = int(fetch_data[0])
+    if int(val) > int(score):
+        data = [(val,id)]
+        sql = """UPDATE tower_minigame
+                SET score = ?
+                WHERE id = ?"""
+        cursor.executemany(sql, data)
+        conn.commit()
+        conn.close()
+        return 1
+    else:
+        conn.commit()
+        conn.close()
+        return 0
+# /МИНИ ИГРЫ
