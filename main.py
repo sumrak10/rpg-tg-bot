@@ -812,6 +812,12 @@ def got_payment(message):
 # ИГРА
 @bot.message_handler(commands=['game'])
 def mainMenu(message):
+
+    qdata = get_quests_by_id(message.from_user.id)
+    if qdata == 0:
+        insert_new_person_in_quests(message.from_user.id)
+        qdata = get_quests_by_id(message.from_user.id)
+
     if string_to_date(get_global_var_data_from_bd('last_stock_update')) != datetime.datetime.now().date():
         stock_data = get_stock_data()
         for stock in stock_data:
@@ -876,6 +882,7 @@ def answer(webAppMes):
 
 # ПРОФИЛЬ
 def profileRegHandler(message):
+
     if message.text == '!меню':
         mainMenu(message)
     elif message.text == 'Имя':
@@ -1089,7 +1096,6 @@ def visitsHandler(message):
         except:
             bot.send_message(message.from_user.id, "Такого персонажа нет в нашей базе данных, проверьте корректность введеного username")
             mainMenu(message)
-        print(message.from_user.id,pdata[1],message.text,friends)
         if not(pdata[1] in enemies):
             if str(message.from_user.id) in friends:
                 update_loc_bd(message.from_user.id, data[0])
@@ -1109,6 +1115,12 @@ def visitsHandler(message):
 
 @bot.message_handler(content_types=['text'])
 def messagesHandler(message):
+    
+    qdata = get_quests_by_id(message.from_user.id)
+    if qdata == 0:
+        insert_new_person_in_quests(message.from_user.id)
+        qdata = get_quests_by_id(message.from_user.id)
+
     pdata = get_data_from_bd_by_id(message.from_user.id)
     if pdata == 0:
         bot.send_message(message.from_user.id,'У тебя кажется нет персонажа.\nВведи /start')
@@ -1147,7 +1159,6 @@ def messagesHandler(message):
             wedding_text = ''
             if wedding_user != 0:
                 wdata = get_data_from_bd_by_id(wedding_user)
-                print(wdata)
                 wedding_text = '\nВ браке с: <a href="t.me/SmrkRP_bot?start=viewPerson-'+wdata[1]+'">['+wdata[1]+'] '+wdata[2]+'</a>'
             bot.send_message(message.from_user.id, "\nUsername: <code>"+puname+"</code>\nИмя: "+pname+"\nВозраст: "+str(page)+"\nБаланс: "+str(pmon)+RPCoin_emoji+"\nОписание: "+pdes+wedding_text, parse_mode="HTML",reply_markup=markup,disable_web_page_preview=True)
         elif message.text == 'Локации📍' or message.text.lower() == '!локации':
@@ -1159,7 +1170,7 @@ def messagesHandler(message):
                     try:
                         bot.send_message(personsId[i][0],'<i><a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> покинул локацию</i>', parse_mode="HTML",disable_web_page_preview=True)
                     except:
-                        print(str(personsId[i][0])+"ошибка при отправке сообщения пользователю "+str(i[0]))
+                        print("ошибка при отправке сообщения пользователю "+str(i[0]))
                 update_loc_bd(message.from_user.id, "0")
             markup = ReplyKeyboardMarkup(resize_keyboard=True)
             time_now = datetime.datetime.now().time()
@@ -1249,9 +1260,9 @@ def messagesHandler(message):
             quest_msg = ''
             if friendscount >= 5:
                 quest_msg = '\n\n<b>Награда получена!</b>'
-            if int(qdata[1]) < 1:
-                add_num_to_mon_by_id(message.from_user.id,500)
-                add_one_in_quest_check(message.from_user.id,0)
+                if int(qdata[1]) < 1:
+                    add_num_to_mon_by_id(message.from_user.id,500)
+                    add_one_in_quest_check(message.from_user.id,0)
             bot.send_message(message.from_user.id,f'<b>Настоящий друг</b>\nДобавь в друзья 5 персонажей\nДобавлено: {str(friendscount)}\nНаграда: 500{RPCoin_emoji}{quest_msg}',parse_mode="HTML")
 
             quest_msg = ''
@@ -1517,8 +1528,9 @@ def messagesHandler(message):
                 urfriends, urenemies = get_friends_and_enemies_list(i[0])
                 if i[0] == message.from_user.id:
                     continue
-                if message.from_user.id in urenemies:
-                    bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
+                if urenemies != '':
+                    if message.from_user.id in urenemies:
+                        bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'(ЧС)</a>: <tg-spoiler>'+message.text+'</tg-spoiler>', parse_mode="HTML",disable_web_page_preview = True)
                 else:
                     if not(i[1] in myenemies):
                     #     bot.send_message(i[0],'<a href="t.me/SmrkRP_bot?start='+puname+'"> Вы не видите данное сообщение потому что '+pname+' добавил вас в ЧС</a>', parse_mode="HTML",disable_web_page_preview = True)
@@ -1526,6 +1538,6 @@ def messagesHandler(message):
                         try:
                             bot.send_message(i[0],'<b>'+'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a></b>: '+message.text, parse_mode="HTML",disable_web_page_preview = True)
                         except:
-                            print(i[0],'не получается отправить сообщение этому пользователю '+str(i[0]))
+                            print('не получается отправить сообщение этому пользователю '+str(i[0]))
         
 # /ЧАТЫ
