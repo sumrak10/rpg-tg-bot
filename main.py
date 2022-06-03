@@ -126,10 +126,10 @@ def viewPerson(message, user_id=0):
         else:
             wedding_user = get_wedding(get_id_by_uname(message))
             wedding_text = ''
-            if wedding_user != 0:
+            if wedding_user:
                 wdata = get_data_from_bd_by_id(wedding_user)
-                wedding_text = '\nВ браке с: <a href="t.me/SmrkRP_bot?start=viewPerson-'+wdata[1]+'">['+wdata[1]+'] '+wdata[2]+'</a>'
-            bot.send_message(user_id, 'Username: <code>' + data[1] + '</code>\nИмя: '+data[2] + '\nВозраст: '+str(data[3]) + '\nОписание: '+data[4]+wedding_text,reply_markup = relationShip_kb(user_id, str(data[0])), disable_web_page_preview=True, parse_mode="HTML" )
+                wedding_text = '\nВ браке: <a href="t.me/SmrkRP_bot?start=viewPerson-'+str(wdata[1])+'">['+str(wdata[1])+'] '+str(wdata[2])+'</a>'
+            bot.send_message(user_id, 'Username: <code>' + str(data[1]) + '</code>\nИмя: '+str(data[2]) + '\nВозраст: '+str(data[3]) + '\nОписание: '+str(data[4])+wedding_text,reply_markup = relationShip_kb(user_id, str(data[0])), disable_web_page_preview=True, parse_mode="HTML" )
 def viewStock(suname,uid):
     sdata = get_stock_by_uname(suname)
     mstock = get_data_from_management(uid)[5]
@@ -1419,11 +1419,12 @@ def messagesHandler(message):
                         if pdata != 0:
                             friends, enemies = get_friends_and_enemies_list(pdata[0])
                             if not(str(message.from_user.id) in enemies):
-                                message = ''
+                                messagetext = ''
                                 for i in range(len(splitMessage)-2):
-                                    message += str(splitMessage[int(i)+2]) + ' '
-                                bot.send_message(pdata[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a>(cообщение): '+message,parse_mode="HTML", disable_web_page_preview=True)
+                                    messagetext += str(splitMessage[int(i)+2]) + ' '
+                                bot.send_message(pdata[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a>(cообщение): '+messagetext,parse_mode="HTML", disable_web_page_preview=True)
                                 bot.send_message(message.from_user.id, 'Сообщение доставлено!')
+                                personsId = get_persons_in_loc_bd(ploc)
                                 for i in personsId:
                                     if str(i[0]) == str(message.from_user.id) or str(i[0]) == str(get_id_by_uname(uname)):
                                         continue
@@ -1446,10 +1447,11 @@ def messagesHandler(message):
                             friends, enemies = get_friends_and_enemies_list(pdata[0])
                             if not(str(message.from_user.id) in enemies):
                                 if int(pdata[6]) == int(ploc):
-                                    message = ''
+                                    messagetext = ''
                                     for i in range(len(splitMessage)-2):
-                                        message += str(splitMessage[int(i)+2]) + ' '
-                                    bot.send_message(pdata[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a>(шепчет): '+message,parse_mode="HTML", disable_web_page_preview=True)
+                                        messagetext += str(splitMessage[int(i)+2]) + ' '
+                                    bot.send_message(pdata[0],'<a href="t.me/SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a>(шепчет): '+messagetext,parse_mode="HTML", disable_web_page_preview=True)
+                                    personsId = get_persons_in_loc_bd(ploc)
                                     for i in personsId:
                                         if str(i[0]) == str(message.from_user.id) or str(i[0]) == str(get_id_by_uname(uname)):
                                             continue
