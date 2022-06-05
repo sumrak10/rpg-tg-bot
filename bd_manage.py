@@ -652,7 +652,7 @@ def update_score_in_towerminigame(id,val):
     sql = "SELECT * FROM tower_minigame WHERE id=?"
     cursor.execute(sql, [(id)])
     fetch_data = cursor.fetchone()
-    score = int(fetch_data[0])
+    score = int(fetch_data[1])
     if int(val) > int(score):
         data = [(val,id)]
         sql = """UPDATE tower_minigame

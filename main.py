@@ -71,10 +71,11 @@ business_cost_factor = 200 # во сколько раз будет соотно�
 # сад
 gardenList = [["🍅",1,2,4],["🧅",1,5,10],["🥒",1,10,20],["🥬",3,15,25],["🥕",5,20,30],["🍆",5,30,50],["🌽",10,45,70],["🧄",10,50,80],["🍓",10,60,90],["🥔",10,70,95],["🍉",20,90,160],["🍇",20,100,180],["🍎",30,150,280],["🍐",30,200,380],["🍑",30,500,950]]
 decay_factor = -3 # через сколько дней созревший урожай сгниет
-min_koef_sell_harvest = 0.5 # на сколько будет множиться рыночная стоимость товара (минимальный порог)
-max_koef_sell_harvest = 1 # (максимальный порог - соответсвенно)
+min_koef_sell_harvest = 0.75 # на сколько будет множиться рыночная стоимость товара (минимальный порог)
+max_koef_sell_harvest = 1.25 # (максимальный порог - соответсвенно)
 
-stock_price_factor = 100 # коэфициент цены (1 RPCoin за 100 сообщений)
+
+stock_price_factor = 10 # коэфициент цены (1 RPCoin за 100 сообщений)
 # /ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 
 
@@ -868,7 +869,8 @@ def webApp(message):
 def answer(webAppMes):
     # print(webAppMes.from_user.id) #вся информация о сообщении
     # print(webAppMes.web_app_data.data) #конкретно то что мы передали в бота
-    if webAppMes.web_app_data.data.split('-')[1] == 'tower':
+    print(webAppMes.web_app_data.data)
+    if webAppMes.web_app_data.data.split('-')[0] == 'tower':
         score = webAppMes.web_app_data.data.split('-')[1]
         if insert_new_person_in_towerminigame(webAppMes.from_user.id,score):
             bot.send_message(webAppMes.chat.id, 'Это совсем даже не плохо для первого раза, но я уверен что ты можешь лучше!')
@@ -1157,9 +1159,9 @@ def messagesHandler(message):
             markup.add('Редактировать профиль⚙️')
             wedding_user = get_wedding(message.from_user.id)
             wedding_text = ''
-            if wedding_user != 0:
+            if wedding_user:
                 wdata = get_data_from_bd_by_id(wedding_user)
-                wedding_text = '\nВ браке с: <a href="t.me/SmrkRP_bot?start=viewPerson-'+wdata[1]+'">['+wdata[1]+'] '+wdata[2]+'</a>'
+                wedding_text = '\nВ браке: <a href="t.me/SmrkRP_bot?start=viewPerson-'+str(wdata[1])+'">['+str(wdata[1])+'] '+str(wdata[2])+'</a>'
             bot.send_message(message.from_user.id, "\nUsername: <code>"+puname+"</code>\nИмя: "+pname+"\nВозраст: "+str(page)+"\nБаланс: "+str(pmon)+RPCoin_emoji+"\nОписание: "+pdes+wedding_text, parse_mode="HTML",reply_markup=markup,disable_web_page_preview=True)
         elif message.text == 'Локации📍' or message.text.lower() == '!локации':
             if ploc != 0:
@@ -1428,7 +1430,7 @@ def messagesHandler(message):
                                 for i in personsId:
                                     if str(i[0]) == str(message.from_user.id) or str(i[0]) == str(get_id_by_uname(uname)):
                                         continue
-                                    bot.send(i[0],'<i><a href="SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> что-то делает в телефоне </i>',parse_mode="HTML",disable_web_preview=True)
+                                    bot.send_message(i[0],'<i><a href="SmrkRP_bot?start=viewPerson-'+puname+'">'+pname+'</a> что-то делает в телефоне </i>',parse_mode="HTML",disable_web_page_preview=True)
                             else:
                                 bot.send_message(message.from_user.id, 'Вы в черном списке у данного персонажа')
                         else:
